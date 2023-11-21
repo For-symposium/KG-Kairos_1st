@@ -20,7 +20,7 @@ class CamMotorControl:
         self.T_course_stop_threshold_goback = None
         self.TOF_mode = False
         self.TOF_mode_pub = True
-        self.epsilon_offset = 0.035
+        self.epsilon_offset = 0.045
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         self.pub_motor = rospy.Publisher('control_cam', Int32, queue_size=1)
         self.pub_client = rospy.Publisher('client_message', Int32, queue_size=1)
@@ -101,10 +101,10 @@ class CamMotorControl:
                 self.T_course_stop_threshold_goback = len(self.zero_turn_arr)
             elif data.data == 22:
                 self.pub_client.publish(2)
-                # self.zero_turn_arr = [1, 0, 1, -1, 0, -1, -1]
-                # self.T_course_stop_threshold_departure = 3
-                self.zero_turn_arr = [0, -1]
+                self.zero_turn_arr = [1, 0, 1, -1, 0, -1, -1]
                 self.T_course_stop_threshold_departure = 3
+                # self.zero_turn_arr = [0, -1]
+                # self.T_course_stop_threshold_departure = 3
                 self.T_course_stop_threshold_goback = len(self.zero_turn_arr)
             else:
                 print(f"Error! Generate zero turn! {self.i}")
@@ -124,7 +124,7 @@ class CamMotorControl:
 
     def process_contours_0(self, cont_list, img, width, roi):
         # Control overall offset
-        offset = width // 2.5
+        offset = width // 3
         c = max(cont_list, key=cv2.contourArea)
         M = cv2.moments(c)
         cx = int(M['m10'] / M['m00'])
@@ -263,7 +263,7 @@ class CamMotorControl:
                 self.pub_motor.publish(1)
 
     def process_start_zero_turn_mode_2(self, c, cx, cy, roi, width, offset):
-        zero_turn_offset = width * 0.48
+        zero_turn_offset = width * 0.1
         print(f"{zero_turn_offset} <= {cx} <= {width-zero_turn_offset}")
         print(f"Center point (Zero turn) : {cx}")
         self.i += 1
@@ -336,15 +336,16 @@ class CamMotorControl:
                 break
 
             height, width, _ = img.shape
-            self.roi_height = round(height * 0.95)
+            self.roi_height = round(height * 0.80)
             self.roi_width = 0
             # Change roi in order to apply the new position
-            roi = img[round(height*offset1):round(height*offset2), self.roi_width:(width - self.roi_width)]
+            roi = img[self.roi_height:, self.roi_width:(width - self.roi_width)]
+            # roi = img[round(height*offset1):round(height*offset2), self.roi_width:(width - self.roi_width)]
             img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             # Yellow line
-            # img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+            img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
             # Black line
-            img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 220, 80]))
+            # img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 210, 100]))
             cont_list, _ = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             try:

@@ -63,6 +63,7 @@ class MainControlMotor:
         self.tof_cnt = 0
         self.manual_mode = False
         self.after_charging_zero_turn_mode = False
+        self.last_data = None
 
         self.pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=1)  # Control Cam mode
         self.pub_robotarm = rospy.Publisher('pub_robotarm', Int32, queue_size=1)  # Enable robotarm
@@ -271,9 +272,13 @@ class MainControlMotor:
             self.set_modes(1)
     
     def send_data(self, data):
-        byte_code = data.to_bytes(1, byteorder='big')
-        ser.write(byte_code)
-        # self.log(f"Send data {data}")
+        if data != self.last_data:
+            byte_code = data.to_bytes(1, byteorder='big')
+            ser.write(byte_code)
+            self.last_data = data
+            self.log(f"Send data {data}")
+        else:
+            self.log(f"Already sent : {data}")
 
     def listener(self):
         rospy.loginfo("Sub node : Start Subscribing")

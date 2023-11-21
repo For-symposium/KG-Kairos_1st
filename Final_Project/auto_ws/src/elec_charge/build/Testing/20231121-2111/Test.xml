@@ -19,16 +19,16 @@
 	NumberOfLogicalCPU="4"
 	NumberOfPhysicalCPU="1"
 	TotalVirtualMemory="8191"
-	TotalPhysicalMemory="3956"
+	TotalPhysicalMemory="3964"
 	LogicalProcessorsPerPhysical="4"
 	ProcessorClockFrequency="0"
 	>
 	<Testing>
 		<StartDateTime>Nov 22 06:11 KST</StartDateTime>
-		<StartTestTime>1700601085</StartTestTime>
+		<StartTestTime>1700601077</StartTestTime>
 		<TestList/>
 		<EndDateTime>Nov 22 06:11 KST</EndDateTime>
-		<EndTestTime>1700601085</EndTestTime>
+		<EndTestTime>1700601077</EndTestTime>
 		<ElapsedMinutes>0</ElapsedMinutes>
 	</Testing>
 </Site>
