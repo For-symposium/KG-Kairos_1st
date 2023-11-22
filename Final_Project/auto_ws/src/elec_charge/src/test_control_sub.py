@@ -20,6 +20,7 @@
 - -111 : IR mode ON -> Zero-turn Right signal
 - -120 : Zero turn mode ON using signal
 - -200 : Zero turn STOP
+- -300 : TOF mode ON
 
 - -1000 : Stop publishing signal to cam_pub
 - 2000 : Zero turn Cam mode ON
@@ -49,9 +50,10 @@ zero_turn_stop = False
 control_bit = "00000000"  # Initialize control bit
 rate = None  # Define rate globally to use in callbacks
 web_sub = True
+TOF_mode = False
 
 def cam_motor_control_callback(data):
-    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, zero_turn_stop
+    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, zero_turn_stop, TOF_mode
     if cam_mode == True:
         if data.data == 10:
             print(f"Cam Sub : GO {i}")
@@ -89,7 +91,9 @@ def cam_motor_control_callback(data):
         rate.sleep()
     elif data.data == -200:
         zero_turn_stop = True
-
+    elif data.data == -300:
+        TOF_mode = True
+        cam_mode = False
 
 def IR_motor_control_callback(data):
     global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, rate, zero_turn_stop
@@ -140,15 +144,21 @@ def IR_motor_control_callback(data):
             time.sleep(2)
         rate.sleep()
 
+def TOF_control_callback(data):
+    if cam_mode == False and TOF_mode == True:
+        print("TOF control mode")
+        pass
+
 def clean_up():
     rospy.loginfo("Sub node: Cleaning up...")
 
 def listener():
     rospy.loginfo("Sub node : Start Subscribing")
-    rospy.Subscriber('control_cam', Int32, cam_motor_control_callback, queue_size=10) # line tracing
-    rospy.Subscriber('control_IR', Int32, IR_motor_control_callback) # line tracing
+    rospy.Subscriber('control_cam', Int32, cam_motor_control_callback, queue_size=10)
+    rospy.Subscriber('control_IR', Int32, IR_motor_control_callback)
+    rospy.Subscriber('control_TOF', Int32, TOF_control_callback)
     rospy.on_shutdown(clean_up)
-    rospy.spin()  # Keep away from exiting
+    rospy.spin()
 
 def send_data(control_bit):
     int_data = int(control_bit, 2)
@@ -166,6 +176,7 @@ if __name__ == '__main__':
         # threading.Thread(target=send_data(control_bit)).start()
         pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=10) # Control Cam mode
         listener()
+        
 
     except rospy.ROSInterruptException:
         print("Sub motor node : STOP")

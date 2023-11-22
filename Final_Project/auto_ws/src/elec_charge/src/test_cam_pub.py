@@ -2,6 +2,8 @@
 Problem:
 In the pass course, it also has approx more than 5. We should take care about this situation.
 --> another bool sign? Not that simple. It detects approxes 4~6 sometimes.
+if (len(approx) >= 4) and (bottom-x-dist > top-x-dist), do not count
+However, roi didn't shrink
 '''
 
 import cv2
@@ -18,12 +20,14 @@ zero_turn_arr = []
 back_zero_turn_arr = []
 normal_pub_cam_mode = True
 zero_turn_cam_mode = False
-no_contour_stop_cnt = 0
-no_contour_stop_threshold = 0
+T_course_count = 0
+T_course_stop_threshold = 0
+TOF_mode = False
 
 def publish_message():
-    global switching_threshold, Done_subscribed, i, normal_pub_cam_mode, zero_turn_arr, zero_turn_cam_mode, no_contour_stop_cnt, no_contour_stop_threshold
-    ignore_approx = False
+    global switching_threshold, Done_subscribed, i, normal_pub_cam_mode, zero_turn_arr, zero_turn_cam_mode, T_course_count, T_course_stop_threshold, TOF_mode
+    # origin 0.05
+    epsilon_offset = 0.03
 
     cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     if not cap.isOpened():
@@ -50,18 +54,25 @@ def publish_message():
         if not ret:
             break
 
-        height, width, _ = img.shape
-        roi_height = height // 100 * 90
+        # Yellow line
+        height, width, _ = img.shape # 640x480
+        roi_height = round(height * 0.95)
         roi_width = 0
         roi = img[roi_height:, roi_width:(width - roi_width)]
-
         img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        img_mask1 = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
-        cont_list, _ = cv2.findContours(img_mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        img_mask_yellow = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+        cont_list, _ = cv2.findContours(img_mask_yellow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        # Black line
+        # roi_height_black = round(height * 0.9)
+        # roi_width_black = 0
+        # roi_black = img[roi_height_black:, roi_width_black:(width - roi_width_black)]
+        # img_cvt_black = cv2.cvtColor(roi_black, cv2.COLOR_BGR2HSV)
+        # img_mask_black = cv2.inRange(img_cvt_black, np.array([0, 0, 0]), np.array([200, 120, 50]))
 
         offset = width // 4
         try:
-            if cont_list:
+            if cont_list and TOF_mode == False:
                 c = max(cont_list, key=cv2.contourArea)
                 M = cv2.moments(c)
                 cx = int(M['m10'] / M['m00'])
@@ -73,11 +84,16 @@ def publish_message():
                     cv2.drawContours(roi, c, -1, (0, 0, 255), 1)
                     cv2.circle(roi, (cx, cy), 5, (0, 255, 0), -1)
 
-                    epsilon = 0.05 * cv2.arcLength(c, True)
+                    epsilon = epsilon_offset * cv2.arcLength(c, True)
                     approx = cv2.approxPolyDP(c, epsilon, True)
 
                     sorted_points = sorted(approx, key=lambda point: point[0][1])
                     top_two_points = sorted_points[:2]
+                    top_x_distance = abs(top_two_points[0][0][0] - top_two_points[1][0][0])
+
+                    sorted_points_reverse = sorted(approx, key=lambda point: point[0][1], reverse=True)
+                    bottom_two_points = sorted_points_reverse[:2]
+                    bottom_x_distance = abs(bottom_two_points[0][0][0] - bottom_two_points[1][0][0])
 
                     for point in sorted_points:
                         x, y = point[0]
@@ -85,45 +101,48 @@ def publish_message():
 
                     ########## IR, Zero-turn mode ##########
                     if len(top_two_points) == 2:
-                        print(f"available_switch_to_ir : {available_switch_to_ir}, len of approx : {len(approx)}")
-                        print(f"Zero turn array: {zero_turn_arr}, count : {no_contour_stop_cnt}")
+                        print(f"len of approx : {len(approx)}")
+                        print(f"Zero turn array: {zero_turn_arr}, count : {T_course_count}")
 
-                        if len(approx) > 4 and available_switch_to_ir and len(zero_turn_arr) > 0: # State 1 : T-course OK + Check the zero turn
+                        # State 1 : if T-course + Check the zero turn
+                        if (len(approx) > 4) and available_switch_to_ir and (len(zero_turn_arr) > 0) and (top_x_distance > bottom_x_distance):
                             next_turn = zero_turn_arr.pop(0)
                             print(f"Next turn value: {next_turn}")
-                            if next_turn == -1: # if zero turn timing
+                            if next_turn == -1: # if left zero turn timing
                                 print(f"Cam pub : Switch to IR sensor mode and Zero turn Left {i}")
                                 i += 1
                                 # start_point_IR = False
                                 pub_motor.publish(-109) # Go into IR mode and Zero turn Left
                                 normal_pub_cam_mode = False # Stop Cam
                                 available_switch_to_ir = False # Prevent from publishing multiple times
-                                no_contour_stop_cnt += 1
+                                T_course_count += 1
                                 time.sleep(2)
                                 continue
-                            elif next_turn == 1: # if zero turn timing
+                            elif next_turn == 1: # if right zero turn timing
                                 print(f"Cam pub : Switch to IR sensor mode and Zero turn Right {i}")
                                 i += 1
                                 # start_point_IR = False
                                 pub_motor.publish(-111) # Go into IR mode and Zero turn Right
                                 normal_pub_cam_mode = False # Stop Cam
                                 available_switch_to_ir = False # Prevent from publishing multiple times
-                                no_contour_stop_cnt += 1
+                                T_course_count += 1
                                 time.sleep(2)
                                 continue
                             elif next_turn == 0: # Pass -> Go straight to State 2
                                 print(f"Cam pub : Pass T-course {i}")
                                 i += 1
                                 available_switch_to_ir = False # Prevent from publishing multiple times
-                                no_contour_stop_cnt += 1
-                                time.sleep(2)
+                                T_course_count += 1
+                                time.sleep(1)
+
                         elif len(zero_turn_arr) == 0:
                             print(f"Cam pub : NO Zero turn array {i}")
                             i += 1
                             continue
 
-                        elif len(approx) > 4 and available_switch_to_ir == False: # State 2 : Pass T-course
-                            print("State 2 : T-course OK + Pass")
+                        # State 2 : Pass T-course
+                        elif len(approx) > 4 and available_switch_to_ir == False: 
+                            print("State 2 : T-course + Pass")
                             sorted_points = sorted(approx, key=lambda point: point[0][1], reverse=True)
                             bottom_two_points = sorted_points[:2]
                             if len(bottom_two_points) == 2:
@@ -146,7 +165,8 @@ def publish_message():
                                     i += 1
                                     pub_motor.publish(1)
 
-                        elif len(approx) == 4: # State 0 : Normal driving case
+                        # State 0 : Normal driving case
+                        elif len(approx) == 4: 
                             mid = (width - 2 * roi_width) // 2
                             if mid - offset <= cx <= mid + offset:
                                 print(f"Cam Pub node : GO {i}")
@@ -163,6 +183,13 @@ def publish_message():
                                 i += 1
                                 available_switch_to_ir = True # Allow the possibility of switching IR
                                 pub_motor.publish(1)
+                        
+                        # For debugging
+                        elif top_x_distance <= bottom_x_distance:
+                            print(f"Should not pop zero turn array!! Just Go. {top_x_distance} <= {bottom_x_distance} {i}")
+                            i += 1
+                            available_switch_to_ir = True
+                            pub_motor.publish(10)
                 
                 elif zero_turn_cam_mode: # Zero turn cam mode
                     print(f"Center point (Zero turn) : {cx}")
@@ -170,7 +197,7 @@ def publish_message():
                     cv2.drawContours(roi, c, -1, (0, 0, 255), 1)
                     cv2.circle(roi, (cx, cy), 5, (0, 255, 0), -1)
 
-                    epsilon = 0.05 * cv2.arcLength(c, True)
+                    epsilon = epsilon_offset * cv2.arcLength(c, True)
                     approx = cv2.approxPolyDP(c, epsilon, True)
                     sorted_points = sorted(approx, key=lambda point: point[0][1])
 
@@ -180,12 +207,18 @@ def publish_message():
                     
                     zero_turn_offset = width * 0.48 # if cam cannot detect it, reduce value
                     if len(approx) == 4:
-                        if zero_turn_offset <= cx <= width - zero_turn_offset:
+                        if zero_turn_offset <= cx <= width-zero_turn_offset:
                             print(f"Cam Pub node : Zero turn STOP {i}")
                             i += 1
                             pub_motor.publish(-200) # Stop zero turn
                             zero_turn_cam_mode = False
                             normal_pub_cam_mode = True
+                            
+                            # if in front of the EV
+                            if T_course_count == T_course_stop_threshold:
+                                print(f"\nIn front of the EV. Now TOF part. {i}\n")
+                                TOF_mode = True
+
                         else:
                             print(f"Cam Pub node : Do Zero turn until stop signal {i}")
                             i += 1
@@ -193,14 +226,10 @@ def publish_message():
                 else: # Neither normal driving mode and zero turn mode
                     print(f"CAM MODE FALSE {i}")
                     i += 1
-            elif no_contour_stop_cnt == no_contour_stop_threshold: # No contour and Stop in front of the EV car
-                pub_motor.publish(0)
-                print(f"Stop in front of the EV car. Stop count: {no_contour_stop_cnt} / Stop threshold: {no_contour_stop_threshold} {i}")
+            elif TOF_mode: # TOF mode
+                print(f"Change state to TOF sensor mode {i}")
                 i += 1
-                normal_pub_cam_mode = False
-                ########## Change state to TOF sensor part ##########
-                print(f"Change state to TOF sensor part {i}")
-                i += 1
+                pub_motor.publish(-300) # TOF mode ON
             else:
                 pub_motor.publish(0)
                 print(f"No contours detected: {i}")
@@ -220,18 +249,20 @@ def publish_message():
     cap.release()
 
 def generate_zero_turn(data):
-    global Done_subscribed, i, zero_turn_arr, back_zero_turn_arr, no_contour_stop_cnt, no_contour_stop_threshold
+    global Done_subscribed, i, zero_turn_arr, back_zero_turn_arr, T_course_count, T_course_stop_threshold
     # switching_threshold = data.data
     rospy.Subscriber('vehicle_position', Int32, generate_zero_turn).unregister() # Stop subscribing
     Done_subscribed = True  # Done subscribe from website
     if data.data == 13:
         zero_turn_arr = [-1, 0, 0, -1, 1, 1, 0, 0, 1, 1] # L P P L R R P P R R
-        no_contour_stop_cnt = 0
-        no_contour_stop_threshold = 4
+        T_course_stop_threshold = 4
+        # zero_turn_arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # T_course_stop_threshold = 10
+        T_course_count = 0
     elif data.data == 22:
         zero_turn_arr = [1, 0, 1, -1, -1, 0, -1, -1] # R P R L L P L L
-        no_contour_stop_cnt = 0
-        no_contour_stop_threshold = 3
+        T_course_count = 0
+        T_course_stop_threshold = 3
     else:
         print(f"Error! Generate zero turn! {i}")
         i += 1

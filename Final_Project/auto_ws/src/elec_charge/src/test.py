@@ -46,7 +46,7 @@ def publish_message():
 
         height, width, _ = img.shape
         # For Line tracing
-        roi_height = height // 100 * 90
+        roi_height = round(height * 0.95)
         roi_width = 0
         roi = img[roi_height:, roi_width:(width - roi_width)]
 
@@ -74,8 +74,9 @@ def publish_message():
                 cv2.circle(roi, (cx, cy), 5, (0, 255, 0), -1)
 
                 # Approximate contour to a polygon
-                epsilon = 0.05 * cv2.arcLength(c, True)
+                epsilon = 0.025 * cv2.arcLength(c, True)
                 approx = cv2.approxPolyDP(c, epsilon, True)
+                print(f"approxes: {len(approx)}")
 
                 # Find the top two points
                 sorted_points = sorted(approx, key=lambda point: point[0][1])  # Sort by y-coordinate
@@ -85,7 +86,7 @@ def publish_message():
                     cv2.circle(roi, (x, y), 5, (255, 0, 0), -1)  # Blue circles
 
                 # 4. Control the motors
-                offset = width * 0.48
+                offset = width * 0.2
                 if offset <= cx <= width - offset:
                     # if current_message != previous_message:
                     print(f"Cam Pub node : GO {i}")
