@@ -1,3 +1,22 @@
+'''
+[-1, 0, 0, -1, 1, 1, 0, 0, 1, 1]
+
+available_switch_to_ir : True, len of approx : 4
+Zero turn array: [0, 0, -1, 1, 1, 0, 0, 1, 1], count : 1
+Center point (Normal) : 349
+available_switch_to_ir : True, len of approx : 6
+Zero turn array: [1, 1, 0, 0, 1, 1], count : 1
+Center point (Normal) : 350
+Cam pub : Switch to IR sensor mode and Zero turn Right 595
+CAM MODE FALSE 596
+CAM MODE FALSE 597
+CAM MODE FALSE 598
+Control cam mode Function : Cam mode OFF 599
+CAM MODE FALSE 600
+CAM MODE FALSE 601
+
+'''
+
 import cv2
 import numpy as np
 import time

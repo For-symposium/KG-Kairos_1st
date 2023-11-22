@@ -1,2 +1,2 @@
 elec_charge
--DCATKIN_DEVEL_PREFIX=/home/bhg/KG-Kairos_1st/Final_Project/auto_ws/devel -DCMAKE_INSTALL_PREFIX=/home/bhg/KG-Kairos_1st/Final_Project/auto_ws/install -G Unix Makefiles
+-DCATKIN_DEVEL_PREFIX=/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/devel -DCMAKE_INSTALL_PREFIX=/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/install -G Unix Makefiles

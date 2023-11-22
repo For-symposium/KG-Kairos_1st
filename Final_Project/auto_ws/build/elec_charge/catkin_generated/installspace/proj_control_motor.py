@@ -29,6 +29,8 @@ When encountered T-course
 Zero-turn
     - Should not Distracked by any command
     - If done, go back to Cam mode
+
+Enable T-course to Zero-turn
 '''
 import rospy
 import time
@@ -62,7 +64,8 @@ def cam_motor_control_callback(data):
             print(f"Cam Sub : Left {i}")
             i += 1
             # mc.counterclockwise_rotation(1)
-            control_bit = "11010000"
+            # control_bit = "11010000"
+            control_bit = "01010001"
             send_data(control_bit)
         elif data.data == 0:
             print(f"Cam Sub : STOP {i}")
@@ -106,14 +109,14 @@ def IR_motor_control_callback(data):
         if zero_turn_dir == -1:
             print(f"Zero turn Sub : Turn Left {i}")
             i += 1
-            control_bit = "10010001" ###counterclockwise
+            control_bit = "10010001"
             send_data(control_bit)
             time.sleep(5)
             zero_turn_mode, cam_mode = False, True
         elif zero_turn_dir == 1:
             print(f"Zero turn Sub : Turn Right {i}")
             i += 1
-            control_bit = "10100001" ###clockwise
+            control_bit = "10100001"
             send_data(control_bit)
             time.sleep(5)
             zero_turn_mode, cam_mode = False, True

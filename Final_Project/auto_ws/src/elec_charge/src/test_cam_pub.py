@@ -1,3 +1,9 @@
+'''
+Problem:
+In the pass course, it also has approx more than 5. We should take care about this situation.
+--> another bool sign? Not that simple. It detects approxes 4~6 sometimes.
+'''
+
 import cv2
 import numpy as np
 import time
@@ -17,8 +23,8 @@ no_contour_stop_threshold = 0
 
 def publish_message():
     global switching_threshold, Done_subscribed, i, normal_pub_cam_mode, zero_turn_arr, zero_turn_cam_mode, no_contour_stop_cnt, no_contour_stop_threshold
-    # start_point_IR = True
-    
+    ignore_approx = False
+
     cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     if not cap.isOpened():
         print("Error: Unable to open camera")
@@ -79,12 +85,13 @@ def publish_message():
 
                     ########## IR, Zero-turn mode ##########
                     if len(top_two_points) == 2:
-                        # x_distance = (top_two_points[0][0][0] - top_two_points[1][0][0])
-                        # print(f"previous : {previous_x_distance}, present : {x_distance}")
-                        # previous_x_distance = x_distance
+                        print(f"available_switch_to_ir : {available_switch_to_ir}, len of approx : {len(approx)}")
+                        print(f"Zero turn array: {zero_turn_arr}, count : {no_contour_stop_cnt}")
 
                         if len(approx) > 4 and available_switch_to_ir and len(zero_turn_arr) > 0: # State 1 : T-course OK + Check the zero turn
-                            if zero_turn_arr.pop(0) == -1: # if zero turn timing
+                            next_turn = zero_turn_arr.pop(0)
+                            print(f"Next turn value: {next_turn}")
+                            if next_turn == -1: # if zero turn timing
                                 print(f"Cam pub : Switch to IR sensor mode and Zero turn Left {i}")
                                 i += 1
                                 # start_point_IR = False
@@ -94,7 +101,7 @@ def publish_message():
                                 no_contour_stop_cnt += 1
                                 time.sleep(2)
                                 continue
-                            elif zero_turn_arr.pop(0) == 1: # if zero turn timing
+                            elif next_turn == 1: # if zero turn timing
                                 print(f"Cam pub : Switch to IR sensor mode and Zero turn Right {i}")
                                 i += 1
                                 # start_point_IR = False
@@ -104,17 +111,19 @@ def publish_message():
                                 no_contour_stop_cnt += 1
                                 time.sleep(2)
                                 continue
-                            elif zero_turn_arr.pop(0) == 0: # Pass -> Go straight to State 2
+                            elif next_turn == 0: # Pass -> Go straight to State 2
                                 print(f"Cam pub : Pass T-course {i}")
                                 i += 1
                                 available_switch_to_ir = False # Prevent from publishing multiple times
                                 no_contour_stop_cnt += 1
+                                time.sleep(2)
                         elif len(zero_turn_arr) == 0:
                             print(f"Cam pub : NO Zero turn array {i}")
                             i += 1
                             continue
 
-                        elif len(approx) > 4 and available_switch_to_ir == False: # State 2 : T-course OK + Pass
+                        elif len(approx) > 4 and available_switch_to_ir == False: # State 2 : Pass T-course
+                            print("State 2 : T-course OK + Pass")
                             sorted_points = sorted(approx, key=lambda point: point[0][1], reverse=True)
                             bottom_two_points = sorted_points[:2]
                             if len(bottom_two_points) == 2:
@@ -137,7 +146,7 @@ def publish_message():
                                     i += 1
                                     pub_motor.publish(1)
 
-                        elif len(approx) == 4 and available_switch_to_ir == False: # State 0 : Normal driving case
+                        elif len(approx) == 4: # State 0 : Normal driving case
                             mid = (width - 2 * roi_width) // 2
                             if mid - offset <= cx <= mid + offset:
                                 print(f"Cam Pub node : GO {i}")
@@ -154,7 +163,6 @@ def publish_message():
                                 i += 1
                                 available_switch_to_ir = True # Allow the possibility of switching IR
                                 pub_motor.publish(1)
-                        print(f"available_switch_to_ir : {available_switch_to_ir}, len of approx : {len(approx)}")
                 
                 elif zero_turn_cam_mode: # Zero turn cam mode
                     print(f"Center point (Zero turn) : {cx}")
