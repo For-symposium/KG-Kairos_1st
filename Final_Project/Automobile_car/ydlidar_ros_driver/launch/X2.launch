@@ -1,10 +1,9 @@
 <launch>
   <!-- For GPIO python file -->
-  <node name="ydlidar_gpio" pkg="ydlidar_ros_driver" type="ydlidar_gpio.py" output="screen">
+  <node name="lidar_high" pkg="ydlidar_ros_driver" type="ydlidar_gpio.py" output="screen">
     <param name="gpio_pin" value="20" />
     <env name="PYTHONUNBUFFERED" value="1"/>
   </node>
-
 
   <node name="ydlidar_lidar_publisher"  pkg="ydlidar_ros_driver"  type="ydlidar_ros_driver_node" output="screen" respawn="false" >
     <!-- string property -->
