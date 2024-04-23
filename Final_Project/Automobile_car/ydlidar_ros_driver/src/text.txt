@@ -1,0 +1,15 @@
+In file included from /home/er/myagv_ros/src/KG-Kairos_1st/Final_Project/Automobile_car/ydlidar_ros_driver/src/ydlidar_ros_driver.cpp:33:
+/usr/include/wiringPi.h:262:21: error: conflicting declaration of ‘void delay(unsigned int)’ with ‘C’ linkage
+  262 | extern void         delay             (unsigned int howLong) ;
+      |                     ^~~~~
+In file included from /usr/local/include/core/base/thread.h:3,
+                 from /usr/local/include/core/common/DriverInterface.h:3,
+                 from /usr/local/include/src/CYdLidar.h:48,
+                 from /home/er/myagv_ros/src/KG-Kairos_1st/Final_Project/Automobile_car/ydlidar_ros_driver/src/ydlidar_ros_driver.cpp:30:
+/usr/local/include/core/base/timer.h:25:20: note: previous declaration with ‘C++’ linkage
+   25 | static inline void delay(uint32_t ms) {
+      |                    ^~~~~
+make[2]: *** [KG-Kairos_1st/Final_Project/Automobile_car/ydlidar_ros_driver/CMakeFiles/ydlidar_ros_driver_node.dir/build.make:63: KG-Kairos_1st/Final_Project/Automobile_car/ydlidar_ros_driver/CMakeFiles/ydlidar_ros_driver_node.dir/src/ydlidar_ros_driver.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:11700: KG-Kairos_1st/Final_Project/Automobile_car/ydlidar_ros_driver/CMakeFiles/ydlidar_ros_driver_node.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2
+Invoking "make -j4 -l4" failed

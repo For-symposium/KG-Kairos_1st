@@ -22,19 +22,6 @@
 // SOFTWARE.
 //
 
-#include <ros/ros.h>
-#include "sensor_msgs/LaserScan.h"
-#include "sensor_msgs/PointCloud.h"
-//#include "ydlidar_ros_driver/LaserFan.h"
-#include "std_srvs/Empty.h"
-#include "src/CYdLidar.h"
-#include "ydlidar_config.h"
-#include <limits>       // std::numeric_limits
-
-#define SDKROSVerision "1.0.2"
-
-CYdLidar laser;
-
 /*
 < operations.py >
 import os
@@ -69,6 +56,20 @@ def radar_close(self, run_launch):
     subprocess.run(close_command, shell=True)
 
 */
+
+#include <ros/ros.h>
+#include "sensor_msgs/LaserScan.h"
+#include "sensor_msgs/PointCloud.h"
+//#include "ydlidar_ros_driver/LaserFan.h"
+#include "std_srvs/Empty.h"
+#include "src/CYdLidar.h"
+#include "ydlidar_config.h"
+#include <limits>       // std::numeric_limits
+#include <wiringPi.h>
+
+#define SDKROSVerision "1.0.2"
+
+CYdLidar laser;
 
 bool stop_scan(std_srvs::Empty::Request &req,
                std_srvs::Empty::Response &res) {
