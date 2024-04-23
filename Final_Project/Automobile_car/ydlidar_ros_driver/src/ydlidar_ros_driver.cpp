@@ -302,6 +302,7 @@ int main(int argc, char **argv) {
   laser.turnOff();
   ROS_INFO("[YDLIDAR INFO] Now YDLIDAR is stopping .......");
   laser.disconnecting();
+  lidar_gpio_low();
   return 0;
 }
 
