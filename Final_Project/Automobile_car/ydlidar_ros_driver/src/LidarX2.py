@@ -11,8 +11,11 @@ class LidarMeasure:
         self.distance = distance
 
     def __repr__(self):
-        return ""+str(self.angle)+": "+str(self.distance)+"mm"
-
+        offset = 2
+        if (180-offset < self.angle < 180+offset):
+            return "Degree: {:.2f}\tDist: {:.2f}cm\n".format(self.angle, self.distance/10)
+        else:
+            return ""
 
 class LidarX2:
 
@@ -24,6 +27,7 @@ class LidarX2:
         self.stopThread = False
         self.measureList = []
         self.serial = None
+        self.lst_return = []
 
     def open(self):
         try:
@@ -131,7 +135,7 @@ class LidarX2:
             return result
         # Get sample count in packet
         ls = self.__readByte()
-        sampleCount = ls#int(ls.encode('hex'), 16)
+        sampleCount = ls #int(ls.encode('hex'), 16)
         if sampleCount == 0:
             return result
         # Get start angle
