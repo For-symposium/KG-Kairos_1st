@@ -82,8 +82,22 @@ bool start_scan(std_srvs::Empty::Request &req,
   return laser.turnOn();
 }
 
+void lidar_gpio_high(){
+  wiringPiSetupGpio();
+  pinMode(20, OUTPUT);
+  digitalWrite(20, HIGH);
+  usleep(50000);
+}
+
+void lidar_gpio_low(){
+  wiringPiSetupGpio();
+  pinMode(20, OUTPUT);
+  digitalWrite(20, LOW);
+  usleep(50000);
+}
 
 int main(int argc, char **argv) {
+  lidar_gpio_high();
   ros::init(argc, argv, "ydlidar_ros_driver");
   ROS_INFO("YDLIDAR ROS Driver Version: %s", SDKROSVerision);
   ros::NodeHandle nh;
