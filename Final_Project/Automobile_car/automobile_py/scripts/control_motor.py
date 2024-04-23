@@ -1,7 +1,3 @@
-################################################################
-##### Get a signal from publish node to control the motors #####
-################################################################
-
 import rospy
 from std_msgs.msg import Int32
 from pymycobot.myagv import MyAgv

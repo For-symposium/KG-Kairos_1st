@@ -1,7 +1,3 @@
-####################################################
-##### Processing Image data gotton from camera #####
-##### And publish motor control signal #####
-####################################################
 #-*- coding:utf-8 -*-
 import cv2
 import numpy as np
@@ -38,7 +34,7 @@ def publish_message():
 
         # 2. Masking
         img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-
+        
         # Red
         # img_mask1 = cv2.inRange(img_cvt, np.array([0, 100, 100]), np.array([20, 255, 255]))
         # img_mask2 = cv2.inRange(img_cvt, np.array([160, 100, 100]), np.array([180, 255, 255]))
@@ -47,7 +43,7 @@ def publish_message():
         # Yellow
         img_mask1 = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
         cont_list, hierachy = cv2.findContours(img_mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
+        
         # 3. Find center of the contour
         offset = 150
         try: # if only detect yellow
