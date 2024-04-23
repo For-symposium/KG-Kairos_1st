@@ -1,62 +1,3 @@
-//
-// The MIT License (MIT)
-//
-// Copyright (c) 2020 EAIBOT. All rights reserved.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
-
-/*
-< operations.py >
-import os
-if os.name == "posix":
-    import RPi.GPIO as GPIO
-
-def radar_open(self):
-    def radar_high():
-        GPIO.setmode(GPIO.BCM)
-        time.sleep(0.1)
-        GPIO.setup(20, GPIO.OUT)
-        GPIO.output(20, GPIO.HIGH)
-
-    radar_high()
-    time.sleep(0.05)
-    launch_command = "roslaunch myagv_odometry myagv_active.launch"  # 使用ros 打开
-    subprocess.run(
-        ['gnome-terminal', '-e', f"bash -c '{launch_command}; exec $SHELL'"])
-
-def radar_close(self, run_launch):
-    def radar_low():
-        GPIO.setmode(GPIO.BCM)
-        time.sleep(0.1)
-        GPIO.setup(20, GPIO.OUT)
-        GPIO.output(20, GPIO.LOW)
-
-    radar_low()
-    time.sleep(0.05)
-
-    close_command = "ps -ef | grep -E " + run_launch + \
-        " | grep -v 'grep' | awk '{print $2}' | xargs kill -2"
-    subprocess.run(close_command, shell=True)
-
-*/
-
 #include <ros/ros.h>
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/PointCloud.h"
@@ -65,7 +6,7 @@ def radar_close(self, run_launch):
 #include "src/CYdLidar.h"
 #include "ydlidar_config.h"
 #include <limits>       // std::numeric_limits
-#include <wiringPi.h>
+// #include <wiringPi.h>
 
 #define SDKROSVerision "1.0.2"
 
@@ -83,22 +24,22 @@ bool start_scan(std_srvs::Empty::Request &req,
   return laser.turnOn();
 }
 
-void lidar_gpio_high(){
-  wiringPiSetupGpio();
-  pinMode(20, OUTPUT);
-  digitalWrite(20, HIGH);
-  usleep(50000);
-}
+// void lidar_gpio_high(){
+//   wiringPiSetupGpio();
+//   pinMode(20, OUTPUT);
+//   digitalWrite(20, HIGH);
+//   usleep(50000);
+// }
 
-void lidar_gpio_low(){
-  wiringPiSetupGpio();
-  pinMode(20, OUTPUT);
-  digitalWrite(20, LOW);
-  usleep(50000);
-}
+// void lidar_gpio_low(){
+//   wiringPiSetupGpio();
+//   pinMode(20, OUTPUT);
+//   digitalWrite(20, LOW);
+//   usleep(50000);
+// }
 
 int main(int argc, char **argv) {
-  lidar_gpio_high();
+  // lidar_gpio_high();
   ros::init(argc, argv, "ydlidar_ros_driver");
   ROS_INFO("YDLIDAR ROS Driver Version: %s", SDKROSVerision);
   ros::NodeHandle nh;
@@ -303,7 +244,7 @@ int main(int argc, char **argv) {
   laser.turnOff();
   ROS_INFO("[YDLIDAR INFO] Now YDLIDAR is stopping .......");
   laser.disconnecting();
-  lidar_gpio_low();
+  // lidar_gpio_low();
   return 0;
 }
 
