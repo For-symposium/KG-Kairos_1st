@@ -6,7 +6,6 @@ from std_msgs.msg import Int32
 
 def publish_message():
     pub_motor = rospy.Publisher('control_motor', Int32, queue_size=10)
-
     rospy.init_node('motor_control_pub', anonymous=True)
     rate = rospy.Rate(10)
 

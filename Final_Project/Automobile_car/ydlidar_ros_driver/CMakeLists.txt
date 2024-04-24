@@ -182,6 +182,7 @@ install(TARGETS ${PROJECT_NAME}_node
 
 catkin_install_python(PROGRAMS
   src/ydlidar_gpio.py
+  src/pub_lidar_obstacle.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
