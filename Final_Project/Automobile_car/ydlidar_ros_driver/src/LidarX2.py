@@ -13,6 +13,7 @@ class LidarMeasure:
     def __repr__(self):
         offset = 2
         if (180-offset < self.angle < 180+offset):
+            # return self.angle, self.distance
             return "Degree: {:.2f}\tDist: {:.2f}cm\n".format(self.angle, self.distance/10)
         else:
             return ""

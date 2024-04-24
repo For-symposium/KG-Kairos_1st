@@ -468,10 +468,10 @@ class YDLidarX2:
 # --------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    # import RPi.GPIO as GPIO
+    import RPi.GPIO as GPIO
 
     # # Global constants
-    # PIN_LIDAR_PWR = 21      # GPIO pin to power the LiDAR
+    PIN_LIDAR_PWR = 20      # GPIO pin to power the LiDAR
     
     def run_show():
         if running:
@@ -509,11 +509,11 @@ if __name__ == "__main__":
     #= main program starts here ======================================================
 
     # Start LiDAR power
-    # GPIO.setwarnings(False)
-    # GPIO.setmode(GPIO.BCM)
-    # GPIO.setup(PIN_LIDAR_PWR, GPIO.OUT)
-    # GPIO.output(PIN_LIDAR_PWR, GPIO.HIGH)
-    # time.sleep(0.5)
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(PIN_LIDAR_PWR, GPIO.OUT)
+    GPIO.output(PIN_LIDAR_PWR, GPIO.HIGH)
+    time.sleep(0.5)
 
     # Create window
     root = tk.Tk()
@@ -539,6 +539,6 @@ if __name__ == "__main__":
     lid.stop_scan()
     time.sleep(1)
     lid.disconnect()
-    # GPIO.output(PIN_LIDAR_PWR, GPIO.LOW)
+    GPIO.output(PIN_LIDAR_PWR, GPIO.LOW)
     print("LiDAR stoped")
     print("Done")
