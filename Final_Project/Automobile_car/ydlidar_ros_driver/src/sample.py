@@ -18,7 +18,8 @@ if not lidar.open():
 try:
     i = 1
     t = time.time()
-    while time.time() - t < 10:  # Run for 10 seconds
+    # while time.time() - t < 10:
+    while True:
         # angle = lidar.getMeasures()
         measures = lidar.getMeasures()
         # print(angle, type(angle))
@@ -29,14 +30,16 @@ try:
             i += 1
             print('\n'.join(measures))
             print('\n')
-        time.sleep(1)
+        time.sleep(0.1)
 
 except KeyboardInterrupt:
     GPIO.output(PIN_LIDAR_PWR, GPIO.LOW)
-    print("LiDAR stoped")
+    print("LiDAR stopped")
     print("Done")
     pass
 
 finally:
     lidar.close()
-    print("Lidar closed.")
+    GPIO.output(PIN_LIDAR_PWR, GPIO.LOW)
+    print("Lidar stopped and closed.")
+    

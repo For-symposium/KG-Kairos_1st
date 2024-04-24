@@ -17,6 +17,7 @@ class LidarMeasure:
             return "Degree: {:.2f}\tDist: {:.2f}cm\n".format(self.angle, self.distance/10)
         else:
             return ""
+        # return "Angle: {:.2f}, Distance: {:.2f}".format(self.angle, self.distance/10)
 
 class LidarX2:
 
@@ -90,31 +91,7 @@ class LidarX2:
             for m in measures:
                 self.__insort_measure(self.measureList, m)
             startAngle = endAngle
-
-    def __insort_measure(self, l, m, lo=0, hi=None):
-        if lo < 0:
-            raise ValueError('lo must be non-negative')
-        if hi is None:
-            hi = len(l)
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if m.angle < l[mid].angle:
-                hi = mid
-            else:
-                lo = mid + 1
-        l.insert(lo, m)
-
-    def __readByte(self):
-        # serial.read can return byte or str depending on python version...
-        return self.__strOrByteToInt(self.serial.read(1))
     
-    def __strOrByteToInt(self, value):
-        if isinstance(value, str):
-            return int(value.encode('hex'), 16)
-        if isinstance(value, int):
-            return value
-        return int.from_bytes(value, byteorder='big')
-
     def __readMeasures(self):
         result = []
         # Check and flush serial
@@ -185,3 +162,32 @@ class LidarX2:
         if checksum == cs:
             return result
         return []
+
+    
+    # def __readMeasures(self):
+    #     return [LidarMeasure(180, 2000)]
+
+    def __insort_measure(self, l, m, lo=0, hi=None):
+        if lo < 0:
+            raise ValueError('lo must be non-negative')
+        if hi is None:
+            hi = len(l)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if m.angle < l[mid].angle:
+                hi = mid
+            else:
+                lo = mid + 1
+        l.insert(lo, m)
+
+    def __readByte(self):
+        # serial.read can return byte or str depending on python version...
+        return self.__strOrByteToInt(self.serial.read(1))
+    
+    def __strOrByteToInt(self, value):
+        if isinstance(value, str):
+            return int(value.encode('hex'), 16)
+        if isinstance(value, int):
+            return value
+        return int.from_bytes(value, byteorder='big')
+
