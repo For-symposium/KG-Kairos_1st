@@ -8,7 +8,7 @@ def ydlidar_publish_message():
     pub_lidar = rospy.Publisher('lidar_obstacle', Int32, queue_size=10)
     rospy.init_node('lidar_obstacle_node', anonymous=True)
     rate = rospy.Rate(10)
-    rospy.loginfo('Publishing Ydlidar Obstacle Detection')
+    rospy.loginfo('Lidar Pub node : Publishing Ydlidar Obstacle Detection')
 
     PIN_LIDAR_PWR = 20      # GPIO pin to power the LiDAR
     GPIO.setwarnings(False)
@@ -20,7 +20,7 @@ def ydlidar_publish_message():
     lidar = LidarX2("/dev/ttyAMA0")  # Name of the serial port, can be /dev/tty*, COM*, etc.
 
     if not lidar.open():
-        print("Cannot open lidar")
+        print("Lidar Pub node : Cannot open lidar")
         exit(1)
 
     try:
@@ -47,27 +47,30 @@ def ydlidar_publish_message():
                 for measure in measures:
                     distance = float(measure.split("Dist:")[1].strip()[:-2])
                     # print(distance)
-                    if distance <= 25:
-                        print("STOP signal from lidar")
+                    if 0 < distance <= 25:
                         pub_lidar.publish(100)
+                        print("Lidar Pub node : STOP")
+                    else:
+                        pub_lidar.publish(110)
+                        print("Lidar Pub node : Allowed")
                 
             time.sleep(0.1)
 
     except KeyboardInterrupt:
         GPIO.output(PIN_LIDAR_PWR, GPIO.LOW)
-        print("LiDAR stopped")
-        print("Done")
+        print("Lidar Pub node : LiDAR stopped")
+        print("Lidar Pub node : Done")
         pass
 
     finally:
         lidar.close()
         GPIO.output(PIN_LIDAR_PWR, GPIO.LOW)
-        print("Lidar stopped and closed.")
+        print("Lidar Pub node : Lidar stopped and closed.")
         
 
 if __name__ == '__main__':
     try:
         ydlidar_publish_message()
     except rospy.ROSInterruptException:
-        print("Finish Publishing")
+        print("Lidar Pub node : Finish Publishing")
         pass

@@ -12,94 +12,103 @@ def publish_message():
     cap = cv2.VideoCapture(0)
     cap.set(3, 320)
     cap.set(4, 240)
-    cx = 0
-    cy = 0
-    dir_not_detected = 0
     rospy.loginfo('Publishing video frame')
 
-    while not rospy.is_shutdown():
-        ret, img  = cap.read()
-        if not ret:
-            break
+    def sub_publish_message(cap):
+        cx = 0
+        cy = 0
+        dir_not_detected = 0
+        while not rospy.is_shutdown():
+            ret, img  = cap.read()
+            if not ret:
+                break
 
-        # 1. ROI 범위 한정
-        height, width, _ = img.shape
-        # print(f"width height : {width}, {height}")
-        roi_height = height // 10 * 9
-        roi_width = 20
-        roi = img[roi_height:, roi_width:(width - roi_width)]
-        # print(f"test1 : {roi_width, width-roi_width}")
-        # print(f"roi shape {roi.shape[0], roi.shape[1]}")
+            # 1. ROI 범위 한정
+            height, width, _ = img.shape
+            # print(f"width height : {width}, {height}")
+            roi_height = height // 10 * 9
+            roi_width = 20
+            roi = img[roi_height:, roi_width:(width - roi_width)]
+            # print(f"test1 : {roi_width, width-roi_width}")
+            # print(f"roi shape {roi.shape[0], roi.shape[1]}")
 
-        # 2. Masking
-        img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        
-        # Red
-        # img_mask1 = cv2.inRange(img_cvt, np.array([0, 100, 100]), np.array([20, 255, 255]))
-        # img_mask2 = cv2.inRange(img_cvt, np.array([160, 100, 100]), np.array([180, 255, 255]))
-        # img_mask = img_mask1 + img_mask2
+            # 2. Masking
+            img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+            
+            # Red
+            # img_mask1 = cv2.inRange(img_cvt, np.array([0, 100, 100]), np.array([20, 255, 255]))
+            # img_mask2 = cv2.inRange(img_cvt, np.array([160, 100, 100]), np.array([180, 255, 255]))
+            # img_mask = img_mask1 + img_mask2
 
-        # Yellow
-        img_mask1 = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
-        cont_list, hierachy = cv2.findContours(img_mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        
-        # 3. Find center of the contour
-        offset = 150
-        try: # if only detect yellow
-            c = max(cont_list, key=cv2.contourArea)
-            M = cv2.moments(c)
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
-            print(cx)
-            cv2.drawContours(roi, c, -1, (0,0,255), 1)
-            cv2.circle(roi, (cx,cy), 5, (0,255,0), -1)
+            # Yellow
+            img_mask1 = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+            cont_list, hierachy = cv2.findContours(img_mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            
+            # 3. Find center of the contour
+            offset = 150
+            try: # if only detect yellow
+                c = max(cont_list, key=cv2.contourArea)
+                M = cv2.moments(c)
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                print(cx)
+                cv2.drawContours(roi, c, -1, (0,0,255), 1)
+                cv2.circle(roi, (cx,cy), 5, (0,255,0), -1)
 
-            # 4. Control the motors
-            # Go 0, (Except)Left -1, (Except)Right 1, Stop 10
-            mid = (width - 2*roi_width) // 2
-            if mid-offset <= cx <= mid+offset:
-                dir_not_detected = cx
-                print("GO")
-                pub_motor.publish(0)
-            elif cx < mid-offset:
-                dir_not_detected = cx
-                print("Left")
-                pub_motor.publish(-1)
-            elif cx > mid+offset:
-                dir_not_detected = cx
-                print("Right")
-                pub_motor.publish(1)
-                # print(f"dnd : {dir_not_detected}, {width-roi_width}")
+                # 4. Control the motors
+                # Go 0, (Except)Left -1, (Except)Right 1, Stop 10
+                mid = (width - 2*roi_width) // 2
+                if mid-offset <= cx <= mid+offset:
+                    dir_not_detected = cx
+                    print("Cam Pub node : GO")
+                    pub_motor.publish(0)
+                elif cx < mid-offset:
+                    dir_not_detected = cx
+                    print("Cam Pub node : Left")
+                    pub_motor.publish(-1)
+                elif cx > mid+offset:
+                    dir_not_detected = cx
+                    print("Cam Pub node : Right")
+                    pub_motor.publish(1)
+                    # print(f"dnd : {dir_not_detected}, {width-roi_width}")
 
-        except:
-            # if cannot detectcounterclockwise_rotationyellow
-            not_offset = 30
-            if 1 <= dir_not_detected <= not_offset*2:
-                print("Except : Left")
-                pub_motor.publish(-1)
-            elif (width-roi_width)-not_offset*2 <= dir_not_detected < width-roi_width:
-                print("Except : Right")
-                pub_motor.publish(1)
-            else:
-                print("Stop")
-                pub_motor.publish(10)
+            except:
+                # if cannot detect
+                not_offset = 30
+                offset_ratio = 3
+                if 0.1 <= dir_not_detected <= not_offset*offset_ratio:
+                    print("Cam Pub node : Except Left")
+                    pub_motor.publish(-1)
+                elif (width-roi_width)-not_offset*offset_ratio <= dir_not_detected < width-roi_width:
+                    print("Cam Pub node : Except Right")
+                    pub_motor.publish(1)
+                else:
+                    print("Cam Pub node : Stop")
+                    pub_motor.publish(10)
 
-        rate.sleep()
-        # 5. (Optional) Check with reference line
-        wmid = width//2
-        # cv2.line(img, (wmid-offset, height), (wmid-offset, roi_height), (0,255,0), 1)
-        # cv2.line(img, (wmid+offset, height), (wmid+offset, roi_height), (0,255,0), 1)
-        # cv2.imshow('mask', img)
-        key = cv2.waitKey(1)
-        # if key&0xff == ord('q'):
-        #     break
-
+            rate.sleep()
+            # 5. (Optional) Check with reference line
+            wmid = width//2
+            # cv2.line(img, (wmid-offset, height), (wmid-offset, roi_height), (0,255,0), 1)
+            # cv2.line(img, (wmid+offset, height), (wmid+offset, roi_height), (0,255,0), 1)
+            # cv2.imshow('mask', img)
+            key = cv2.waitKey(1)
+            # if key&0xff == ord('q'):
+            #     break
+    
+    sub_publish_message(cap)
     cv2.destroyAllWindows()
     cap.release()
+
+def subscriber():
+    print("Lidar --> CAM Subscriber")
+    rospy.init_node('CAM_Subscribe_from_Lidar', anonymous=True)
+    rospy.Subscriber('lidar_obstacle', Int32, publish_message)
+    rospy.spin() # Keep away from exiting
 
 if __name__ == '__main__':
     try:
         publish_message()
     except rospy.ROSInterruptException:
-        print("Finish Publishing")
+        print("Cam Pub node : Finish Publishing")
         pass
