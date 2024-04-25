@@ -47,10 +47,11 @@ def ydlidar_publish_message():
                 for measure in measures:
                     distance = float(measure.split("Dist:")[1].strip()[:-2])
                     # print(distance)
-                    if 0 < distance <= 25:
+                    dist = 25
+                    if 0 < distance <= dist:
                         pub_lidar.publish(100)
                         print("Lidar Pub node : STOP")
-                    else:
+                    elif dist <= distance:
                         pub_lidar.publish(110)
                         print("Lidar Pub node : Allowed")
                 
