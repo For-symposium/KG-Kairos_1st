@@ -13,7 +13,7 @@ def publish_message():
     cap = cv2.VideoCapture(0)
     cap.set(3, 640)
     cap.set(4, 480)
-    rospy.loginfo('Publishing video frame')
+    rospy.loginfo('Publishing video signal')
 
     cx = 0
     cy = 0
