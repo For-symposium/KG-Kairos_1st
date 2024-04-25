@@ -47,16 +47,16 @@ def lidar_check_callback(ldata):
         # mc.go_ahead(1)
         lidar2motor_control = True
 
+def clean_up():
+    rospy.loginfo("Sub node: Cleaning up...")
+    mc.stop()
+
 def listener():
-    print("Sub node : Motor Control Subscriber")
     rospy.init_node('motor_control_sub', anonymous=True)
     rospy.Subscriber('control_motor', Int32, motor_control_callback)
     rospy.Subscriber('lidar_obstacle', Int32, lidar_check_callback)
-    rospy.spin() # Keep away from exiting
+    rospy.on_shutdown(clean_up)
+    rospy.spin()  # Keep away from exiting
 
 if __name__ == '__main__':
-    try:
-        listener()
-    except rospy.ROSInterruptException:
-        mc.stop()
-        print("Sub node : Finish Subscribing")
+    listener()
