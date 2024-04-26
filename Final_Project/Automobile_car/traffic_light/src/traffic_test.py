@@ -8,10 +8,10 @@ from pymycobot.myagv import MyAgv
 # Reduce ROI MORE!!!!
 # mc = MyAgv('/dev/ttyAMA2', 115200)
 def publish_message_traffic():
-    pub_traffic = rospy.Publisher('traffic_light', Int32, queue_size=10)
-    rospy.init_node('traffic_pub_node', anonymous=True)
-    rate = rospy.Rate(10)
-    rospy.loginfo('Publishing traffic signal')
+    # pub_traffic = rospy.Publisher('traffic_light', Int32, queue_size=10)
+    # rospy.init_node('traffic_pub_node', anonymous=True)
+    # rate = rospy.Rate(10)
+    # rospy.loginfo('Publishing traffic signal')
 
     cap = cv2.VideoCapture(0)
     cap.set(3, 640)
@@ -26,7 +26,7 @@ def publish_message_traffic():
         # 1. ROI ?? ??
         height, width, _ = img.shape
         roi_height = 180
-        roi_width = width // 4
+        roi_width = width // 6
         roi = img[roi_height:roi_height*2, roi_width:(width - roi_width)]
 
         # 2. Masking
@@ -34,7 +34,7 @@ def publish_message_traffic():
         
         # Red color mask
         # img_mask_red2 = cv2.inRange(img_cvt, np.array([160, 120, 80]), np.array([180, 255, 255]))
-        img_mask_red2 = cv2.inRange(img_cvt, np.array([170, 200, 200]), np.array([180, 255, 255]))
+        img_mask_red2 = cv2.inRange(img_cvt, np.array([160, 150, 150]), np.array([180, 255, 255]))
 
         # Green color mask
         # img_mask_green = cv2.inRange(img_cvt, np.array([45, 100, 150]), np.array([75, 255, 255]))
@@ -44,11 +44,11 @@ def publish_message_traffic():
             if cv2.countNonZero(img_mask_red2) > 0:
                 print(f"Traffic Pub : Red light detected {i}")
                 i += 1
-                pub_traffic.publish(200) # Stop
+                # pub_traffic.publish(200) # Stop
             else:
                 print(f"Traffic Pub : Pass {j}")
                 j += 1
-                pub_traffic.publish(210) # Pass
+                # pub_traffic.publish(210) # Pass
 
             # elif cv2.countNonZero(img_mask_green) > 0:
             #     print(f"Traffic : Green light detected {j}")
@@ -56,15 +56,15 @@ def publish_message_traffic():
             #     pub_traffic.publish(210) # Go
 
             # Show the masks
-            # cv2.imshow('Red Mask', img_mask_red2)
+            cv2.imshow('Red Mask', img_mask_red2)
             # cv2.imshow('Green Mask', img_mask_green)
             
         except:
             pass
 
-        rate.sleep()
+        # rate.sleep()
 
-        cv2.imshow('Red Mask', img)
+        # cv2.imshow('Red Mask', img)
         # cv2.imshow('Green Mask', img_mask_green)
         key = cv2.waitKey(1)
         if key&0xff == ord('q'):

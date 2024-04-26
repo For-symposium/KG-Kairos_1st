@@ -1,25 +1,24 @@
+# process_img.py 24.04.26 09:20
 #-*- coding:utf-8 -*-
 import cv2
 import numpy as np
 import rospy
 from std_msgs.msg import Int32
-# import time
+import time
 
 def publish_message():
     pub_motor = rospy.Publisher('control_motor', Int32, queue_size=10)
-    pub_traffic = rospy.Publisher('control_traffic', Int32, queue_size=10)
     rospy.init_node('motor_control_pub', anonymous=True)
     rate = rospy.Rate(10)
 
     cap = cv2.VideoCapture(0)
     cap.set(3, 640)
     cap.set(4, 480)
-    rospy.loginfo('Publishing video signal with traffic light')
+    rospy.loginfo('Publishing video signal')
 
     cx = 0
     cy = 0
     dir_not_detected = 0
-    i, j = 0, 0
     while not rospy.is_shutdown():
         ret, img  = cap.read()
         if not ret:
@@ -28,40 +27,24 @@ def publish_message():
         # 1. ROI 범위 한정
         height, width, _ = img.shape
         # print(f"width height : {width}, {height}")
-        # For Line tracing
         roi_height = height // 100 * 90
         roi_width = 0
         roi = img[roi_height:, roi_width:(width - roi_width)]
-
-        # For traffic light
-        roi_height_traffic = 180
-        roi_width_traffic = width // 6
-        roi_traffic = img[roi_height_traffic:roi_height_traffic*2, roi_width_traffic:(width - roi_width_traffic)]
+        # print(f"test1 : {roi_width, width-roi_width}")
+        # print(f"roi shape {roi.shape[0], roi.shape[1]}")
 
         # 2. Masking
         img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        img_cvt_traffic = cv2.cvtColor(roi_traffic, cv2.COLOR_BGR2HSV)
-
-        # Yellow line tracing
-        img_mask1 = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
-        cont_list, _ = cv2.findContours(img_mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         
-        # Red Traffic light
-        img_mask_red2 = cv2.inRange(img_cvt_traffic, np.array([160, 150, 150]), np.array([180, 255, 255]))
+        # Red
+        # img_mask1 = cv2.inRange(img_cvt, np.array([0, 100, 100]), np.array([20, 255, 255]))
+        # img_mask2 = cv2.inRange(img_cvt, np.array([160, 100, 100]), np.array([180, 255, 255]))
+        # img_mask = img_mask1 + img_mask2
 
-        # Traffic light : Stop 200, Pass 210
-        try:
-            if cv2.countNonZero(img_mask_red2) > 0:
-                print(f"Traffic Pub : Red light detected {i}")
-                i += 1
-                pub_traffic.publish(200) # Stop
-            else:
-                print(f"Traffic Pub : Pass {j}")
-                j += 1
-                pub_traffic.publish(210) # Pass
-        except:
-            print("Traffic Pub : Exception")
-
+        # Yellow
+        img_mask1 = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+        cont_list, hierachy = cv2.findContours(img_mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        
         # 3. Find center of the contour
         offset = width//2.25
         try: # if only detect yellow
@@ -88,6 +71,7 @@ def publish_message():
                 dir_not_detected = cx
                 print("Cam Pub node : Right")
                 pub_motor.publish(1)
+                # print(f"dnd : {dir_not_detected}, {width-roi_width}")
 
         except:
             # if cannot detect
@@ -116,9 +100,84 @@ def publish_message():
     cap.release()
 
 if __name__ == '__main__':
-    try:
-        publish_message()
-    except rospy.ROSInterruptException:
-        print("Motor control Pub node : Finish Publishing")
+    publish_message()
     
         
+# control_motor.py 24.04.26 09.33
+import rospy
+from std_msgs.msg import Int32
+from pymycobot.myagv import MyAgv
+
+'''
+< Data signals >
+
+1. OpenCV Line-tracing
+    - 0 : GO
+    - -1 : Left
+    - 1 : Right
+    - 10 : STOP
+
+2. Lidar Obstacle
+    - 100 : STOP
+    - 110 : Allow to move
+
+3. Traffic light
+    - 200 : STOP
+    - 210 : Allowed
+'''
+
+mc = MyAgv('/dev/ttyAMA2', 115200)
+lidar2motor_control = True # bridge from lidar to motor_control
+traffic2motor_control = True # bridge from traffic to motor_control
+
+def motor_control_callback(data):
+    global lidar2motor_control, traffic2motor_control
+    if lidar2motor_control == True and traffic2motor_control == True:
+        if data.data == 0:
+            print("Cam Sub : GO")
+            mc.go_ahead(1)
+        elif data.data == 1:
+            print("Cam Sub : Right")
+            mc.clockwise_rotation(1)
+        elif data.data == -1:
+            print("Cam Sub : Left")
+            mc.counterclockwise_rotation(1)
+        elif data.data == 10:
+            print("Cam Sub : STOP")
+            mc.stop()
+
+def lidar_check_callback(ldata):
+    global lidar2motor_control
+    if ldata.data == 100:
+        print("Lidar Sub : STOP")
+        mc.stop()
+        lidar2motor_control = False
+    elif ldata.data == 110:
+        print("Lidar Sub : Pass")
+        # mc.go_ahead(1)
+        lidar2motor_control = True
+
+def traffic_check_callback(tdata):
+    global traffic2motor_control
+    if tdata.data == 200:
+        print("Traffic Sub : STOP")
+        mc.stop()
+        traffic2motor_control = False
+    else:
+        print("Traffic Sub : Pass")
+        traffic2motor_control = True
+
+def clean_up():
+    rospy.loginfo("Sub node: Cleaning up...")
+    mc.stop()
+
+def listener():
+    rospy.init_node('motor_control_sub', anonymous=True)
+    rospy.Subscriber('control_motor', Int32, motor_control_callback)
+    rospy.Subscriber('lidar_obstacle', Int32, lidar_check_callback)
+    # rospy.Subscriber('traffic_light', Int32, traffic_check_callback)
+    rospy.on_shutdown(clean_up)
+    rospy.spin()  # Keep away from exiting
+
+if __name__ == '__main__':
+    listener()

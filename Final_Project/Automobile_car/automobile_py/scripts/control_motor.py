@@ -25,7 +25,7 @@ lidar2motor_control = True # bridge from lidar to motor_control
 traffic2motor_control = True # bridge from traffic to motor_control
 
 def motor_control_callback(data):
-    global lidar2motor_control
+    global lidar2motor_control, traffic2motor_control
     if lidar2motor_control == True and traffic2motor_control == True:
         if data.data == 0:
             print("Cam Sub : GO")
@@ -69,7 +69,7 @@ def listener():
     rospy.init_node('motor_control_sub', anonymous=True)
     rospy.Subscriber('control_motor', Int32, motor_control_callback)
     rospy.Subscriber('lidar_obstacle', Int32, lidar_check_callback)
-    rospy.Subscriber('traffic_light', Int32, traffic_check_callback)
+    rospy.Subscriber('control_traffic', Int32, traffic_check_callback)
     rospy.on_shutdown(clean_up)
     rospy.spin()  # Keep away from exiting
 
