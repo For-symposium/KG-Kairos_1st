@@ -28,7 +28,7 @@ def ydlidar_publish_message():
         # t = time.time()
         # while time.time() - t < 10:
         while not rospy.is_shutdown():
-            # angle = lidar.getMeasures()
+
             measures = lidar.getMeasures()
             '''
             [, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , Degree: 180.33   Dist: 61.65cm
@@ -40,13 +40,10 @@ def ydlidar_publish_message():
             measures = [str(m) for m in measures if str(m)]  # Filter out empty strings
             if measures:  # Only print if there are valid measures
                 print(f"\nStep {i}")
-                # print(measures) 
-                # ['Degree: 178.11\tDist: 745.50cm\n', 'Degree: 180.72\tDist: 61.65cm\n', 'Degree: 181.49\tDist: 61.73cm\n']
                 i += 1
                 print(''.join(measures))
                 for measure in measures:
                     distance = float(measure.split("Dist:")[1].strip()[:-2])
-                    # print(distance)
                     dist = 25
                     if 0 < distance <= dist:
                         pub_lidar.publish(100)

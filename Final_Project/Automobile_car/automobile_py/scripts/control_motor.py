@@ -67,9 +67,9 @@ def clean_up():
 
 def listener():
     rospy.init_node('motor_control_sub', anonymous=True)
-    rospy.Subscriber('control_motor', Int32, motor_control_callback)
-    rospy.Subscriber('lidar_obstacle', Int32, lidar_check_callback)
-    rospy.Subscriber('control_traffic', Int32, traffic_check_callback)
+    rospy.Subscriber('control_motor', Int32, motor_control_callback) # line tracing
+    rospy.Subscriber('lidar_obstacle', Int32, lidar_check_callback) # Lidar
+    rospy.Subscriber('control_traffic', Int32, traffic_check_callback) # traffic light
     rospy.on_shutdown(clean_up)
     rospy.spin()  # Keep away from exiting
 

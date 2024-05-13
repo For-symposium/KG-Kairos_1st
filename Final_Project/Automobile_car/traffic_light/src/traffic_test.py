@@ -23,7 +23,7 @@ def publish_message_traffic():
         if not ret:
             break
         
-        # 1. ROI ?? ??
+        # 1. ROI 
         height, width, _ = img.shape
         roi_height = 180
         roi_width = width // 6
@@ -33,7 +33,6 @@ def publish_message_traffic():
         img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
         
         # Red color mask
-        # img_mask_red2 = cv2.inRange(img_cvt, np.array([160, 120, 80]), np.array([180, 255, 255]))
         img_mask_red2 = cv2.inRange(img_cvt, np.array([160, 150, 150]), np.array([180, 255, 255]))
 
         # Green color mask
@@ -44,16 +43,13 @@ def publish_message_traffic():
             if cv2.countNonZero(img_mask_red2) > 0:
                 print(f"Traffic Pub : Red light detected {i}")
                 i += 1
-                # pub_traffic.publish(200) # Stop
             else:
                 print(f"Traffic Pub : Pass {j}")
                 j += 1
-                # pub_traffic.publish(210) # Pass
 
             # elif cv2.countNonZero(img_mask_green) > 0:
             #     print(f"Traffic : Green light detected {j}")
             #     j += 1
-            #     pub_traffic.publish(210) # Go
 
             # Show the masks
             cv2.imshow('Red Mask', img_mask_red2)
