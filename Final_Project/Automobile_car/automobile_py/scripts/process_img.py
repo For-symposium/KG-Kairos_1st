@@ -105,12 +105,14 @@ def publish_message():
         rate.sleep()
         # 5. (Optional) Check with reference line
         wmid = width//2
+        key = cv2.waitKey(1)
+
+        ### In case I need to check
         # cv2.line(img, (wmid-offset, height), (wmid-offset, roi_height), (0,255,0), 1)
         # cv2.line(img, (wmid+offset, height), (wmid+offset, roi_height), (0,255,0), 1)
-        # cv2.imshow('mask', img)
-        key = cv2.waitKey(1)
-        # if key&0xff == ord('q'):
-        #     break
+        cv2.imshow('mask', img)
+        if key&0xff == ord('q'):
+            break
 
     cv2.destroyAllWindows()
     cap.release()
