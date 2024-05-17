@@ -106,7 +106,6 @@ def publish_message():
                         print("Turn left")
                     subprocess.run(["python3", path_to_subfile])
 
-
                 # Update previous_x_distance
                 print(f"prev_dist = {previous_x_distance}, x_dist = {x_distance}")
                 previous_x_distance = x_distance
