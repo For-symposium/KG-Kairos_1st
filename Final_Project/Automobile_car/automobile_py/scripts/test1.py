@@ -1,26 +1,10 @@
-import cv2
+import time
 
-def list_cameras():
-    index = 0
-    arr = []
-    while True:
-        cap = cv2.VideoCapture(index)
-        if not cap.read()[0]:
-            break
-        else:
-            arr.append(index)
-        cap.release()
-        index += 1
-    return arr
+def IR_mode_message():
+    print("IR mode... time sleep for 3 seconds...")
+    print("IR mode... time sleep for 3 seconds...")
+    print("IR mode... time sleep for 3 seconds...")
+    time.sleep(1.5)
 
-camera_indices = list_cameras()
-print("Available camera indices: ", camera_indices)
-
-# Check each camera index
-for i in camera_indices:
-    cap = cv2.VideoCapture(i)
-    if cap.isOpened():
-        print(f"Camera {i} is working")
-        cap.release()
-    else:
-        print(f"Camera {i} is not working")
+if __name__ == '__main__':
+    IR_mode_message()

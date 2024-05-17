@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 import time
+import subprocess
+
+path_to_subfile = "/Users/bhg/Desktop/교육/Coding_zip/KG_Kairos_code/Project/Kairos_AGV/github_clone/KG-Kairos_1st/Final_Project/Automobile_car/automobile_py/scripts/test1.py"
+
 
 def publish_message():
     global IR_mode
@@ -16,10 +20,6 @@ def publish_message():
     previous_x_distance = None
 
     while IR_mode == False:
-        if IR_mode == True:
-            IR_mode_message()
-            continue
-
         ret, img = cap.read()
         if not ret:
             break
@@ -80,27 +80,32 @@ def publish_message():
             sorted_points = sorted(approx, key=lambda point: point[0][1])  # Sort by y-coordinate
             top_two_points = sorted_points[:2]  # Top two points
 
-            for point in top_two_points:
+            for point in sorted_points:
                 x, y = point[0]
                 cv2.circle(roi, (x, y), 5, (255, 0, 0), -1)  # Blue circles
-                print(f"Top point coordinate: ({x}, {y})")
+                # print(f"Top point coordinate: ({x}, {y})")
 
             # Calculate and print the distance along the x-axis
             if len(top_two_points) == 2:
                 x_distance = (top_two_points[0][0][0] - top_two_points[1][0][0])
-                print(f"Distance along x-axis between top two points: {x_distance}")
+                print(f"Distance: {top_two_points[0][0][0]} - {top_two_points[1][0][0]} = {x_distance}")
 
                 # Check if the current x_distance is twice larger than the previous one
-                if previous_x_distance is not None and abs(x_distance) > 2 * abs(previous_x_distance):
+                # if previous_x_distance is not None and abs(x_distance) > 2 * abs(previous_x_distance) and abs(previous_x_distance) > 20:
+                #     print("#####Switch to IR sensor mode#####")
+                #     print(f"prev_dist = {previous_x_distance}, x_dist = {x_distance}")
+                #     # previous_x_distance = x_distance
+                #     IR_mode = True
+                #     IR_mode_message()
+
+                if len(approx) > 4 and abs(x_distance) > 20:
                     print("#####Switch to IR sensor mode#####")
-                    print("#####Switch to IR sensor mode#####")
-                    print("#####Switch to IR sensor mode#####")
-                    print("#####Switch to IR sensor mode#####")
-                    print("#####Switch to IR sensor mode#####")
-                    print("#####Switch to IR sensor mode#####")
-                    print(f"prev_dist = {previous_x_distance}, x_dist = {x_distance}")
-                    previous_x_distance = x_distance
-                    IR_mode = True
+                    if x_distance > 0:
+                        print("Turn right")
+                    else:
+                        print("Turn left")
+                    subprocess.run(["python3", path_to_subfile])
+
 
                 # Update previous_x_distance
                 print(f"prev_dist = {previous_x_distance}, x_dist = {x_distance}")
@@ -141,15 +146,7 @@ def publish_message():
 
     cv2.destroyAllWindows()
     cap.release()
-
-def IR_mode_message():
-    global IR_mode
-    print("IR mode")
-    print("IR mode")
-    print("IR mode")
-    time.sleep(3)
-    IR_mode = False
-
+    
 IR_mode = False
 
 if __name__ == '__main__':
