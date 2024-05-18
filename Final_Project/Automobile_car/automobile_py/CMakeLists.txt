@@ -8,7 +8,6 @@ project(automobile_py)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  image_transport
   roscpp
   rospy
   sensor_msgs
@@ -164,6 +163,9 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/process_img.py
   scripts/control_motor.py
+  scripts/proj_cam_pub_with_T.py
+  scripts/proj_control_motor.py
+  scripts/IR_mode_pub.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
