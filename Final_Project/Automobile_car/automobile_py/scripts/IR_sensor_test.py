@@ -1,5 +1,8 @@
 import Jetson.GPIO as GPIO
 import time
+import rospy
+from std_msgs.msg import Int32
+
 
 # 사용할 GPIO 핀 번호 (BCM 모드)
 IR_SENSOR_PIN_1 = 17 # GPIO 11
@@ -22,7 +25,11 @@ def read_ir_sensor_2():
 def read_ir_sensor_3():
 	return GPIO.input(IR_SENSOR_PIN_3)
 
-def main():
+def IR_publisher():
+	# IR_pub_motor = rospy.Publisher('control_IR', Int32, queue_size=10)
+    # rospy.init_node('motor_control_pub', anonymous=True)
+    # rate = rospy.Rate(10)
+
 	try:
 		while True:
 			if read_ir_sensor_1() == 0:
@@ -40,11 +47,11 @@ def main():
 			else:
 				print("3rd Black")
 
-			time.sleep(0.1)  # 0.5초 간격으로 값 읽기
+			time.sleep(0.1)
 	except KeyboardInterrupt:
 		print("Program interrupted")
 	finally:
 		GPIO.cleanup()
 
 if __name__ == '__main__':
-	main()
+	IR_publisher()

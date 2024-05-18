@@ -7,6 +7,10 @@ path_to_subfile = "/Users/bhg/Desktop/교육/Coding_zip/KG_Kairos_code/
 
 
 def publish_message():
+    # pub_motor = rospy.Publisher('control_cam', Int32, queue_size=10)
+    # rospy.init_node('cam_motor_control_pubnode', anonymous=True)
+    # rate = rospy.Rate(10)
+    
     global IR_mode
 
     cap = cv2.VideoCapture(0)
