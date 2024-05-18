@@ -1,0 +1,8 @@
+prefix=/home/bhg/project/KG-Kairos_1st/Final_Project/install
+
+Name: elec_car_charge
+Description: Description of elec_car_charge
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

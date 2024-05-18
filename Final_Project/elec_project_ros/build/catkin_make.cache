@@ -1,0 +1,2 @@
+elec_car_charge
+-DCATKIN_DEVEL_PREFIX=/home/bhg/project/KG-Kairos_1st/Final_Project/devel -DCMAKE_INSTALL_PREFIX=/home/bhg/project/KG-Kairos_1st/Final_Project/install -G Unix Makefiles
