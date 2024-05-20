@@ -1,0 +1,8 @@
+prefix=/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/devel
+
+Name: elec_charge
+Description: Description of elec_charge
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
