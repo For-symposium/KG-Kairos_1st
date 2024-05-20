@@ -1,0 +1,8 @@
+prefix=/home/bhg/project/KG-Kairos_1st/Final_Project/catkin_ws/install
+
+Name: elec_charge_with_ir
+Description: Description of elec_charge_with_ir
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
