@@ -16,6 +16,8 @@ GPIO.setup(IR_SENSOR_PIN_1, GPIO.IN)
 GPIO.setup(IR_SENSOR_PIN_2, GPIO.IN)
 GPIO.setup(IR_SENSOR_PIN_3, GPIO.IN)
 
+i = 0
+
 def read_ir_sensor_1():
 	return GPIO.input(IR_SENSOR_PIN_1)
 
@@ -27,14 +29,17 @@ def read_ir_sensor_3():
 
 # 0 : White(No line), 1 : Black(Line)
 def IR_mode_pub():
+    global i
     try:
         while not rospy.is_shutdown():
             if read_ir_sensor_1 == 0 and read_ir_sensor_2 == 0 and read_ir_sensor_3 == 0:
-                print("IR pub : STOP")
+                print(f"IR pub : All white. STOP {i}")
+                i += 1
                 pub_IR.publish(0) # STOP
                 break
             else:
-                print("IR pub : GO")
+                print(f"IR pub : GO {i}")
+                i += 1
                 pub_IR.publish(10) # GO
             rate.sleep()
     except rospy.ROSInterruptException:
@@ -46,8 +51,8 @@ def IR_mode_pub():
 
 if __name__ == '__main__':
     try:
-        pub_IR = rospy.Publisher('control_IR', Int32, queue_size=10)
         rospy.init_node('IR pub node', anonymous=True)
+        pub_IR = rospy.Publisher('control_IR', Int32, queue_size=10)
         rate = rospy.Rate(10)
         IR_mode_pub()
     except rospy.ROSInterruptException:
