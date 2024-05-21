@@ -32,19 +32,16 @@ def IR_mode_pub():
     global i
     try:
         while not rospy.is_shutdown():
-            print(f"{read_ir_sensor_1()}, {read_ir_sensor_2()}, {read_ir_sensor_3()}")
             if read_ir_sensor_1() == 0 and read_ir_sensor_2() == 0 and read_ir_sensor_3() == 0:
                 print(f"IR pub : All white. STOP {i}")
                 i += 1
                 pub_IR.publish(0) # STOP
                 continue
             else:
-                print(f"IR pub : GO {i}")
+                print(f"IR pub : GO {read_ir_sensor_1()}, {read_ir_sensor_2()}, {read_ir_sensor_3()} // {i}")
                 i += 1
                 pub_IR.publish(10) # GO
             rate.sleep()
-    except rospy.ROSInterruptException:
-        print("IR mode pub : ROS Interrupted")
     except KeyboardInterrupt:
         print("IR mode pub : Keyboard Interrupted")
     finally:

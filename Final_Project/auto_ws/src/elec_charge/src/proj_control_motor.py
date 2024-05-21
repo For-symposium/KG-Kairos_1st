@@ -87,12 +87,12 @@ def IR_motor_control_callback(data):
         if zero_turn_dir == -1:
             print(f"Zero turn Sub : Turn Left {i}")
             i += 1
-            time.sleep(2)
+            time.sleep(5)
             zero_turn_mode, cam_mode = False, True
         elif zero_turn_dir == 1:
             print(f"Zero turn Sub : Turn Right {i}")
             i += 1
-            time.sleep(2)
+            time.sleep(5)
             zero_turn_mode, cam_mode = False, True
 
 
