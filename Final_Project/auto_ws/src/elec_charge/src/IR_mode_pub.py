@@ -32,11 +32,12 @@ def IR_mode_pub():
     global i
     try:
         while not rospy.is_shutdown():
-            if read_ir_sensor_1 == 0 and read_ir_sensor_2 == 0 and read_ir_sensor_3 == 0:
+            print(f"{read_ir_sensor_1()}, {read_ir_sensor_2()}, {read_ir_sensor_3()}")
+            if read_ir_sensor_1() == 0 and read_ir_sensor_2() == 0 and read_ir_sensor_3() == 0:
                 print(f"IR pub : All white. STOP {i}")
                 i += 1
                 pub_IR.publish(0) # STOP
-                break
+                continue
             else:
                 print(f"IR pub : GO {i}")
                 i += 1

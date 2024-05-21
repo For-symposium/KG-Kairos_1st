@@ -71,7 +71,7 @@ def publish_message():
                     x_distance = (top_two_points[0][0][0] - top_two_points[1][0][0])
                     # print(f"Distance: {top_two_points[0][0][0]} - {top_two_points[1][0][0]} = {x_distance}")
 
-                    if len(approx) > 4 and abs(x_distance) > 20:
+                    if len(approx) > 4 and abs(previous_x_distance)-abs(x_distance):
                         print("#####Switch to IR sensor mode#####")
                         # subprocess.run(["python3", path_to_subfile])
                         if x_distance > 0:
@@ -79,7 +79,7 @@ def publish_message():
                             pub_motor.publish(-117)
                             continue
                         else:
-                            print("Cam pub : Zero turn dir : Left")
+                            print("Cam pub : Zero turn dir Left")
                             pub_motor.publish(-113)
                             continue
                     
