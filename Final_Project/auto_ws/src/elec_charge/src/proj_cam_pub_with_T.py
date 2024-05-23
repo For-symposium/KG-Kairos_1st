@@ -17,6 +17,8 @@ def publish_message():
     dir_not_detected = 0
     i = 0
     previous_x_distance = None
+    # previous_message = None
+    # current_message = 10
 
     while not rospy.is_shutdown():
         # print("check 1")
@@ -90,23 +92,31 @@ def publish_message():
                 # 4. Control the motors
                 mid = (width - 2 * roi_width) // 2
                 if mid - offset <= cx <= mid + offset:
+                    # if current_message != previous_message:
                     dir_not_detected = cx
                     print(f"Cam Pub node : GO {i}")
                     i += 1
                     pub_motor.publish(10)
+                    # previous_message = current_message
                 elif cx < mid - offset:
+                    # if current_message != previous_message:
                     dir_not_detected = cx
                     print(f"Cam Pub node : Left {i}")
                     i += 1
                     pub_motor.publish(-1)
+                    # previous_message = current_message
                 elif cx > mid + offset:
+                    # if current_message != previous_message:
                     dir_not_detected = cx
                     print(f"Cam Pub node : Right {i}")
                     i += 1
                     pub_motor.publish(1)
+                    # previous_message = current_message
             else:
+                # if current_message != previous_message:
                 print(f"No contours detected: {i}")
                 pub_motor.publish(0)  # Stop if no contours are found
+                # previous_message = current_message
                 i += 1
 
         except Exception as e:
@@ -117,6 +127,7 @@ def publish_message():
         cv2.imshow('mask', img)
         if key & 0xff == ord('q'):
             break
+
         rate.sleep()
     cv2.destroyAllWindows()
     cap.release()
