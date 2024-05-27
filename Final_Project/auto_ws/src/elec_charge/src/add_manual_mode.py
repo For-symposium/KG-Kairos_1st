@@ -44,35 +44,36 @@ zero_turn_dir = 0 # Left(-1), Right(1)
 IR_mode = False
 manual_control_mode = False
 ser = None
-control_bit = "00000000"  # Initialize control bit
+control_code = 1  # Initialize control bit
 rate = None  # Define rate globally to use in callbacks
+
 def cam_motor_control_callback(data):
-    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, IR_mode
+    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_code, IR_mode
     if cam_mode == True:
         if data.data == 10:
             print(f"Cam Sub : GO {i}")
             i += 1
             # mc.go_ahead(1)
-            control_bit = "11110001"
-            send_data(control_bit)
+            control_code = 11
+            send_data(control_code)
         elif data.data == 1:
             print(f"Cam Sub : Right {i}")
             i += 1
             # mc.clockwise_rotation(1)
-            control_bit = "11100000"
-            send_data(control_bit)
+            control_code = 14
+            send_data(control_code)
         elif data.data == -1:
             print(f"Cam Sub : Left {i}")
             i += 1
             # mc.counterclockwise_rotation(1)
-            control_bit = "11010000"
-            send_data(control_bit)
+            control_code = 13
+            send_data(control_code)
         elif data.data == 0:
             print(f"Cam Sub : STOP {i}")
             i += 1
             # mc.stop()
-            control_bit = "00110001"
-            send_data(control_bit)
+            control_code = 2
+            send_data(control_code)
         rate.sleep()
         if data.data == -113:
             print(f"Cam Sub : Switch to IR mode && Zero-turn Left {i}")
@@ -90,66 +91,57 @@ def cam_motor_control_callback(data):
 
 
 def IR_motor_control_callback(data):
-    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, rate, IR_mode
+    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_code, rate, IR_mode
     if cam_mode == False and IR_mode == True and zero_turn_mode == False:
         if data.data == 10:
             print(f"IR Sub : GO {i}")
             i += 1
             # mc.go_ahead(1)
-            control_bit = "11110001"
-            send_data(control_bit)
+            control_code = 11
+            send_data(control_code)
         elif data.data == 0:
             print(f"IR Sub : All white. STOP {i}")
             i += 1
             zero_turn_mode = True
             # mc.stop()
-            control_bit = "00110001"
-            send_data(control_bit)
+            control_code = 2
+            send_data(control_code)
         # rate.sleep()
     if cam_mode == False and IR_mode == True and zero_turn_mode == True:
         ##### Zero-turn by hard-coding #####
         if zero_turn_dir == -1:
             print(f"Zero turn Sub : Turn Left {i}")
             i += 1
-            control_bit = "10010001" ###counterclockwise
-            send_data(control_bit)
+            control_code = 9 ###counterclockwise
+            send_data(control_code)
             time.sleep(5)
             IR_mode, zero_turn_mode, cam_mode = False, False, True
         elif zero_turn_dir == 1:
             print(f"Zero turn Sub : Turn Right {i}")
             i += 1
-            control_bit = "10100001" ###clockwise
-            send_data(control_bit)
+            control_code = 10 ###clockwise
+            send_data(control_code)
             time.sleep(5)
             IR_mode, zero_turn_mode, cam_mode = False, False, True
         # rate.sleep()
 
 def manual_control_callback(data):
-    global i, cam_mode, IR_mode
+    global i, cam_mode, IR_mode, manual_control_mode, control_code
     manual_control_mode = int(data.data[0])
-    int_data = int(data.data[1:],2)
 
-    if manual_control_mode == True:
+    if manual_control_mode == 1:
         cam_mode, IR_mode = False, False
 
-        bit_xor = 0
-        num = 7
-
-        for p in range (0, num):
-            bit_xor ^= (int_data >> p) & 1
-        parity_bit = bit_xor ^ 1
-
-        data_with_parity = (int_data << 1) | parity_bit
-
-        control_bit = str(bin(data_with_parity))
-
-        rospy.loginfo(f"manual mode sub: {control_bit}")
+        control_code = int(data.data[1:])
+        rospy.loginfo(f"manual mode sub: {control_code}")
         i += 1
         
-        send_data(control_bit)
+        send_data(control_code)
     else :
+        cam_mode, IR_mode = True, False
         rospy.loginfo("Quit manual control mode")
-        cam_mode = True
+        control_code = 1
+        send_data(control_code)
 
 
 def t_callback(data):
@@ -170,11 +162,9 @@ def listener():
     rospy.on_shutdown(clean_up)
     # rospy.spin()  # Keep away from exiting
 
-def send_data(control_bit):
-    int_data = int(control_bit, 2)
-    byte_data = int_data.to_bytes(1, byteorder='big')
-    ser.write(byte_data)
-    rospy.loginfo(f"Sending: {bin(int_data)[2:].zfill(8)}")
+def send_data(control_code):
+    ser.write(control_code)
+    rospy.loginfo(f"Sending: {control_code}")
 
 if __name__ == '__main__':
     try:
@@ -182,10 +172,10 @@ if __name__ == '__main__':
         rospy.loginfo(f"serial connetected")
 
         rate = rospy.Rate(10)
-        port = "/dev/ttyUSB0"
+        port = "/dev/ttyUSB1"
         baudrate = 9600
         ser = serial.Serial(port, baudrate, timeout=1)
-        thread = threading.Thread(target=send_data(control_bit))
+        thread = threading.Thread(target=send_data(control_code))
         thread.start()
         listener()
 
