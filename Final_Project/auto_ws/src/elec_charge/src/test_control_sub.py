@@ -16,6 +16,7 @@
     - 99 : Left
 
 - -100 : Cam mode ON, Others OFF
+- -110 : IR mode ON
 - -113 : IR mode ON, Others OFF, Zero-turn Left
 - -117 : IR mode ON, Others OFF, Zero-turn Right
 - -120 : Zero-turn mode ON, Others OFF
@@ -45,6 +46,7 @@ zero_turn_dir = 0 # Left(-1), Right(1)
 ser = None
 control_bit = "00000000"  # Initialize control bit
 rate = None  # Define rate globally to use in callbacks
+
 def cam_motor_control_callback(data):
     global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit
     if cam_mode == True:
@@ -74,17 +76,11 @@ def cam_motor_control_callback(data):
             control_bit = "00110001"
             send_data(control_bit)
         rate.sleep()
-        if data.data == -113:
-            print(f"Cam Sub : Switch to IR mode && Zero-turn Left {i}")
+        if data.data == -110:
+            print(f"Cam Sub : Switch to IR mode {i}")
             i += 1
             cam_mode = False
-            zero_turn_dir = -1
-        elif data.data == -117:
-            print(f"Cam Sub : Switch to IR mode && Zero-turn Right {i}")
-            i += 1
-            cam_mode = False
-            zero_turn_dir = 1
-        # rate.sleep()
+        rate.sleep()
 
 
 def IR_motor_control_callback(data):
@@ -103,7 +99,7 @@ def IR_motor_control_callback(data):
             # mc.stop()
             control_bit = "00110001"
             send_data(control_bit)
-        # rate.sleep()
+        rate.sleep()
     if cam_mode == False and zero_turn_mode == True:
         ##### Zero-turn by hard-coding #####
         if zero_turn_dir == -1:
@@ -120,7 +116,7 @@ def IR_motor_control_callback(data):
             send_data(control_bit)
             time.sleep(5)
             zero_turn_mode, cam_mode = False, True
-        # rate.sleep()
+        rate.sleep()
 
 
 def clean_up():
