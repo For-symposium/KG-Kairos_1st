@@ -5,7 +5,7 @@ import time
 # import rospy
 # from std_msgs.msg import Int32
 
-path_to_subfile = "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/src/elec_charge/src/IR_mode_pub.py"
+# path_to_subfile = "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/src/elec_charge/src/IR_mode_pub.py"
 
 def publish_message():
     cap = cv2.VideoCapture(0)
