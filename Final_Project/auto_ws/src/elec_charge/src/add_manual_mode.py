@@ -143,9 +143,12 @@ def manual_control_callback(data):
         control_code = 1
         send_data(control_code)
 
+def vehicle_position_callback(data):
+    if data.data == 1:
+        rospy.loginfo("Vehicle is on the right")
+    else:
+        rospy.loginfo("Vehicle is on the left")
 
-def t_callback(data):
-    rospy.loginfo(f"t_count: {data.data}")
 
 
 def clean_up():
@@ -158,7 +161,7 @@ def listener():
     rospy.Subscriber('control_cam', Int32, cam_motor_control_callback, queue_size=10) # line tracing
     rospy.Subscriber('control_IR', Int32, IR_motor_control_callback) # line tracing
     rospy.Subscriber('control_mode', String, manual_control_callback)
-    rospy.Subscriber('t_count', Int32, t_callback)
+    rospy.Subscriber('vehicle_position', Int32, vehicle_position_callback)
     rospy.on_shutdown(clean_up)
     # rospy.spin()  # Keep away from exiting
 
