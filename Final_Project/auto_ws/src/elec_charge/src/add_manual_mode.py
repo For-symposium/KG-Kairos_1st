@@ -163,7 +163,8 @@ def listener():
     # rospy.spin()  # Keep away from exiting
 
 def send_data(control_code):
-    ser.write(control_code)
+    byte_code = control_code.to_bytes(1,byteorder='big')
+    ser.write(byte_code)
     rospy.loginfo(f"Sending: {control_code}")
 
 if __name__ == '__main__':
@@ -172,7 +173,7 @@ if __name__ == '__main__':
         rospy.loginfo(f"serial connetected")
 
         rate = rospy.Rate(10)
-        port = "/dev/ttyUSB1"
+        port = "/dev/ttyUSB0"
         baudrate = 9600
         ser = serial.Serial(port, baudrate, timeout=1)
         thread = threading.Thread(target=send_data(control_code))
