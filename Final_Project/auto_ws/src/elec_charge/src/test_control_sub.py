@@ -34,8 +34,6 @@ Enable T-course to Zero-turn
 import rospy
 import time
 from std_msgs.msg import Int32
-import serial
-import threading
 
 i = 0
 cam_mode = True
@@ -46,6 +44,7 @@ t_course_cnt = 0
 ser = None
 control_bit = "00000000"  # Initialize control bit
 rate = None  # Define rate globally to use in callbacks
+web_sub = True
 
 def cam_motor_control_callback(data):
     global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit
@@ -86,8 +85,8 @@ def IR_motor_control_callback(data):
             i += 1
             control_bit = "11110001"
             # send_data(control_bit)
-        elif data.data == 0:
-            print(f"IR Sub : All white. STOP {i}")
+        elif data.data == -120:
+            print(f"IR Sub : Do Zero turn {i}")
             i += 1
             zero_turn_mode = True
             control_bit = "00110001"
@@ -112,21 +111,24 @@ def IR_motor_control_callback(data):
         rate.sleep()
 
 def generate_zeroturn_arr(data):
-    global zero_turn_arr, t_course_cnt
+    global zero_turn_arr, t_course_cnt, i, web_sub
     # Zero turn direction
-    if data.data // 10 == 1: # Left 11, 12, 13
-        zero_turn_arr = [-1, -1, 1, 1] # LLRR
-    elif data.data // 10 == 2: # Right 21, 22
-        zero_turn_arr = [1, 1, -1, -1] # RRLL
-    # T-course count
-    t_course_cnt = data.data % 10
-    pub_t_course_cnt.publish(t_course_cnt)
+    if web_sub == True:
+        if data.data // 10 == 1: # Left 11, 12, 13
+            zero_turn_arr = [-1, -1, 1, 1] # LLRR
+        elif data.data // 10 == 2: # Right 21, 22
+            zero_turn_arr = [1, 1, -1, -1] # RRLL
+        # T-course count
+        t_course_cnt = data.data % 10
+        pub_t_course_cnt.publish(t_course_cnt)
+        print(f"generate zeroturn array {data.data}, {t_course_cnt} {i}")
+        i += 1
+        web_sub = False
 
 def clean_up():
     rospy.loginfo("Sub node: Cleaning up...")
 
 def listener():
-    rospy.init_node('motor_control_node', anonymous=True)
     rospy.loginfo("Sub node : Start Subscribing")
     rospy.Subscriber('control_cam', Int32, cam_motor_control_callback, queue_size=10) # line tracing
     rospy.Subscriber('control_IR', Int32, IR_motor_control_callback) # line tracing
@@ -143,7 +145,6 @@ def send_data(control_bit):
 if __name__ == '__main__':
     try:
         rospy.init_node('motor_control_sub_node', anonymous=True)
-        rospy.loginfo(f"serial connetected")
         rate = rospy.Rate(10)
         # port = "/dev/ttyUSB0"
         # baudrate = 9600
@@ -151,7 +152,6 @@ if __name__ == '__main__':
         # threading.Thread(target=send_data(control_bit)).start()
         pub_t_course_cnt = rospy.Publisher('t_course_cnt', Int32, queue_size=10) # T-course count
         listener()
-        rospy.spin()
 
     except rospy.ROSInterruptException:
         print("Sub motor node : STOP")

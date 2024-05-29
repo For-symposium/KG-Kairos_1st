@@ -23,16 +23,10 @@ GPIO.setup(IR_SENSOR_PIN_2, GPIO.IN)
 # GPIO.setup(IR_SENSOR_PIN_3, GPIO.IN)
 
 def read_ir_sensor_Left():
-    if GPIO.input(IR_SENSOR_PIN_1) == 0:
-        return "LEFT NO LINE"
-    elif GPIO.input(IR_SENSOR_PIN_1) == 1:
-	    return "LEFT YES LINE"
+    return GPIO.input(IR_SENSOR_PIN_1)
 
 def read_ir_sensor_Right():
-    if GPIO.input(IR_SENSOR_PIN_2) == 0:
-        return "RIGHT NO LINE"
-    elif GPIO.input(IR_SENSOR_PIN_2) == 1:
-        return "RIGHT YES LINE"
+    return GPIO.input(IR_SENSOR_PIN_2)
 
 # def read_ir_sensor_3():
 # 	return GPIO.input(IR_SENSOR_PIN_3)
@@ -44,17 +38,13 @@ def IR_mode_pub():
     YES_LINE = 1
     try:
         while not rospy.is_shutdown():
-            if read_ir_sensor_Left() == YES_LINE and read_ir_sensor_Right() == NO_LINE:
-                print(f"IR pub : Zero turn Left {i}")
-                pub_IR.publish(-113) # Zero turn Left
+            if read_ir_sensor_Left() == NO_LINE and read_ir_sensor_Right() == NO_LINE:
+                print(f"IR pub : Do zero turn {i}")
+                pub_IR.publish(-120) # Zero turn Left
                 i += 1
-            elif read_ir_sensor_Left() == NO_LINE and read_ir_sensor_Right() == YES_LINE:
-                print(f"IR pub : Zero turn Right {i}")
-                pub_IR.publish(-117) # Zero turn Right
-                i += 1
-            elif read_ir_sensor_Left() == NO_LINE and read_ir_sensor_Right() == NO_LINE:
-                print(f"IR pub : GO {read_ir_sensor_Left()}, {read_ir_sensor_Right()} // {i}")
-                pub_IR.publish(10) # GO
+            else:
+                print(f"IR pub : GO {i}")
+                pub_IR.publish(10)
                 i += 1
             rate.sleep()
     except KeyboardInterrupt:
