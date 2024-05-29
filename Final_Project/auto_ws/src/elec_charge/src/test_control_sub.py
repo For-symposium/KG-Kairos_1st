@@ -17,8 +17,8 @@
 
 - -100 : Cam mode ON, Others OFF
 - -110 : IR mode ON
-- -113 : IR mode ON, Others OFF, Zero-turn Left
-- -117 : IR mode ON, Others OFF, Zero-turn Right
+- X-113 : IR mode ON, Others OFF, Zero-turn Left
+- X-117 : IR mode ON, Others OFF, Zero-turn Right
 - -120 : Zero-turn mode ON, Others OFF
 '''
 '''
@@ -92,7 +92,7 @@ def IR_motor_control_callback(data):
             # mc.go_ahead(1)
             control_bit = "11110001"
             send_data(control_bit)
-        elif data.data == 0:
+        elif data.data == -120:
             print(f"IR Sub : All white. STOP {i}")
             i += 1
             zero_turn_mode = True
@@ -100,6 +100,7 @@ def IR_motor_control_callback(data):
             control_bit = "00110001"
             send_data(control_bit)
         rate.sleep()
+    '''
     if cam_mode == False and zero_turn_mode == True:
         ##### Zero-turn by hard-coding #####
         if zero_turn_dir == -1:
@@ -117,7 +118,7 @@ def IR_motor_control_callback(data):
             time.sleep(5)
             zero_turn_mode, cam_mode = False, True
         rate.sleep()
-
+    '''
 
 def clean_up():
     rospy.loginfo("Sub node: Cleaning up...")

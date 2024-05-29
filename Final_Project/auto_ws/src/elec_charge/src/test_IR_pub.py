@@ -44,6 +44,22 @@ def IR_mode_pub():
     YES_LINE = 1
     try:
         while not rospy.is_shutdown():
+            '''
+            1. ir sensor L&R are all out of line
+            2. IR pub: Stop, control_sub need to start Zero turn according to Map_arr
+            3. Else situation IR pub: Go
+            
+            '''
+            if read_ir_sensor_Left()==NO_LINE and read_ir_sensor_Right()==NO_LINE:
+                print(f"IR pub : Stop // Control_sub need to start Zero turn according to MAP_ARR {i}")
+                pub_IR.publish(-120)
+                i+=1
+            else:
+                print(f"IR pub : Go {i}")
+                pub_IR.publish(10)
+                i+=1
+
+            ''' 
             if read_ir_sensor_Left() == YES_LINE and read_ir_sensor_Right() == NO_LINE:
                 print(f"IR pub : Zero turn Left {i}")
                 pub_IR.publish(-113) # Zero turn Left
@@ -56,6 +72,7 @@ def IR_mode_pub():
                 print(f"IR pub : GO {read_ir_sensor_Left()}, {read_ir_sensor_Right()} // {i}")
                 pub_IR.publish(10) # GO
                 i += 1
+            '''
             rate.sleep()
     except KeyboardInterrupt:
         print("IR mode pub : Keyboard Interrupted")
