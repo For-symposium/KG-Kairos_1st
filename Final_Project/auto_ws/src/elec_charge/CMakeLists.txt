@@ -164,6 +164,10 @@ catkin_install_python(PROGRAMS
   src/proj_cam_pub_with_T.py  
   src/proj_control_motor.py
   src/add_manual_mode.py
+  src/test_cam_pub.py
+  src/test.py
+  src/test_control_sub.py
+  src/test_IR_pub.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
