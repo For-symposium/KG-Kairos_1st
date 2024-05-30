@@ -15,9 +15,14 @@
     - 101 : Right
     - 99 : Left
 
-- -100 : Cam mode ON, Others OFF
-- -110 : IR mode ON
-- -120 : Zero-turn mode ON, Others OFF
+- -100 : Cam mode ON
+- -109 : IR mode ON -> Zero-turn Left signal
+- -111 : IR mode ON -> Zero-turn Right signal
+- -120 : Zero turn mode ON using signal
+- -200 : Zero turn STOP
+
+- -1000 : Stop publishing signal to cam_pub
+- 2000 : Zero turn Cam mode ON
 '''
 '''
 Normally
@@ -39,15 +44,14 @@ i = 0
 cam_mode = True
 zero_turn_mode = False
 zero_turn_dir = 0 # Left(-1), Right(1)
-zero_turn_arr = []
-t_course_cnt = 0
-ser = None
+zero_turn_stop = False
+# ser = None
 control_bit = "00000000"  # Initialize control bit
 rate = None  # Define rate globally to use in callbacks
 web_sub = True
 
 def cam_motor_control_callback(data):
-    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit
+    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, zero_turn_stop
     if cam_mode == True:
         if data.data == 10:
             print(f"Cam Sub : GO {i}")
@@ -70,15 +74,25 @@ def cam_motor_control_callback(data):
             control_bit = "00110001"
             # send_data(control_bit)
         rate.sleep()
-        if data.data == -110:
-            print(f"Cam Sub : Switch to IR mode {i}")
-            i += 1
+        if data.data == -109:
             cam_mode = False
+            zero_turn_dir = -1 # Zero turn Left
+            pub_control_cam.publish(-1000) # Unable cam publishing
+            print(f"Cam Sub : Switch to IR mode and Zero turn dir is Left {i}")
+            i += 1
+        elif data.data == -111:
+            cam_mode = False
+            zero_turn_dir = 1 # Zero turn Right
+            pub_control_cam.publish(-1000) # Unable cam publishing
+            print(f"Cam Sub : Switch to IR mode and Zero turn dir is Right {i}")
+            i += 1
         rate.sleep()
+    elif data.data == -200:
+        zero_turn_stop = True
 
 
 def IR_motor_control_callback(data):
-    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, rate
+    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, rate, zero_turn_stop
     if cam_mode == False and zero_turn_mode == False:
         if data.data == 10:
             print(f"IR Sub : GO {i}")
@@ -89,41 +103,42 @@ def IR_motor_control_callback(data):
             print(f"IR Sub : Do Zero turn {i}")
             i += 1
             zero_turn_mode = True
-            control_bit = "00110001"
-            # send_data(control_bit)
+            pub_control_cam.publish(2000) # Zero turn cam mode ON
         rate.sleep()
-    if cam_mode == False and zero_turn_mode == True:
-        ##### Zero-turn by hard-coding #####
+    elif cam_mode == False and zero_turn_mode == True:
+        ##### Zero-turn #####
         if zero_turn_dir == -1:
             print(f"Zero turn Sub : Turn Left {i}")
             i += 1
-            control_bit = "10010001"
-            # send_data(control_bit)
-            time.sleep(5)
-            zero_turn_mode, cam_mode = False, True
+            ###############################
+            ########## Zero turn ##########
+            ###############################
+            # 1. Signal to STM32 Zero turn Left
+            # 2. If camera cx is center, Stop signal
+            if zero_turn_stop:
+                zero_turn_mode = False
+                # 3. Switch to cam mode again
+                cam_mode = True
+                print(f"Zero turn Sub : Zero turn STOP // Normal Cam Mode ON {i}")
+                i += 1
+            time.sleep(2)
         elif zero_turn_dir == 1:
             print(f"Zero turn Sub : Turn Right {i}")
             i += 1
-            control_bit = "10100001"
-            # send_data(control_bit)
-            time.sleep(5)
-            zero_turn_mode, cam_mode = False, True
+            ###############################
+            ########## Zero turn ##########
+            ###############################
+            # 1. Signal to STM32 Zero turn Right
+            # 2. If camera cx is center, Stop signal
+            if zero_turn_stop:
+                zero_turn_mode = False
+                # 3. Switch to cam mode again
+                cam_mode = True
+                pub_control_cam.publish(1000) # After zero turn, Enable cam publishing
+                print(f"Zero turn Sub : Zero turn STOP // Normal Cam Mode ON {i}")
+                i += 1
+            time.sleep(2)
         rate.sleep()
-
-def generate_zeroturn_arr(data):
-    global zero_turn_arr, t_course_cnt, i, web_sub
-    # Zero turn direction
-    if web_sub == True:
-        if data.data // 10 == 1: # Left 11, 12, 13
-            zero_turn_arr = [-1, -1, 1, 1] # LLRR
-        elif data.data // 10 == 2: # Right 21, 22
-            zero_turn_arr = [1, 1, -1, -1] # RRLL
-        # T-course count
-        t_course_cnt = data.data % 10
-        pub_t_course_cnt.publish(t_course_cnt)
-        print(f"generate zeroturn array {data.data}, {t_course_cnt} {i}")
-        i += 1
-        web_sub = False
 
 def clean_up():
     rospy.loginfo("Sub node: Cleaning up...")
@@ -132,7 +147,6 @@ def listener():
     rospy.loginfo("Sub node : Start Subscribing")
     rospy.Subscriber('control_cam', Int32, cam_motor_control_callback, queue_size=10) # line tracing
     rospy.Subscriber('control_IR', Int32, IR_motor_control_callback) # line tracing
-    rospy.Subscriber('vehicle_position', Int32, generate_zeroturn_arr) # receive EV position
     rospy.on_shutdown(clean_up)
     rospy.spin()  # Keep away from exiting
 
@@ -150,7 +164,7 @@ if __name__ == '__main__':
         # baudrate = 9600
         # ser = serial.Serial(port, baudrate, timeout=1)
         # threading.Thread(target=send_data(control_bit)).start()
-        pub_t_course_cnt = rospy.Publisher('t_course_cnt', Int32, queue_size=10) # T-course count
+        pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=10) # Control Cam mode
         listener()
 
     except rospy.ROSInterruptException:

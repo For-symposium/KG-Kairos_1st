@@ -21,6 +21,8 @@ GPIO.setwarnings(False)  # Disable GPIO warnings
 GPIO.setup(IR_SENSOR_PIN_1, GPIO.IN)
 GPIO.setup(IR_SENSOR_PIN_2, GPIO.IN)
 # GPIO.setup(IR_SENSOR_PIN_3, GPIO.IN)
+IR_mode = False
+i = 0
 
 def read_ir_sensor_Left():
     return GPIO.input(IR_SENSOR_PIN_1)
@@ -33,7 +35,7 @@ def read_ir_sensor_Right():
 
 # 0 : White(No line), 1 : Black(Line)
 def IR_mode_pub():
-    i = 0
+    global i, IR_mode
     NO_LINE = 0
     YES_LINE = 1
     try:
