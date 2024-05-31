@@ -77,7 +77,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/elec_charge" TYPE PROGRAM FILES "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/build/elec_charge/catkin_generated/installspace/test_IR_pub.py")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/elec_charge" TYPE PROGRAM FILES "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/build/elec_charge/catkin_generated/installspace/test_IR_TOF_pub.py")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
