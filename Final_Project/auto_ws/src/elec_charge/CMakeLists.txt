@@ -166,7 +166,7 @@ catkin_install_python(PROGRAMS
   src/test_cam_pub.py
   src/test.py
   src/test_control_sub.py
-  src/test_IR_pub.py
+  src/test_IR_TOF_pub.py
   src/test_TOF_pub.py
   src/proj_TOF_pub.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
