@@ -15,6 +15,12 @@
     - 101 : Right
     - 99 : Left
 
+4. TOF mode
+    - 10 : GO
+    - -1 : Left
+    - 1 : Right
+    - 0 : STOP
+
 - -100 : Cam mode ON
 - -109 : IR mode ON -> Zero-turn Left signal
 - -111 : IR mode ON -> Zero-turn Right signal
@@ -145,9 +151,24 @@ def IR_motor_control_callback(data):
         rate.sleep()
 
 def TOF_control_callback(data):
+    global i
     if cam_mode == False and TOF_mode == True:
-        print("TOF control mode")
-        pass
+        if data.data == 10:
+            print("TOF Sub : GO {i}")
+            i += 1
+            # send signal to STM32
+        elif data.data == -1:
+            print("TOF Sub : Left {i}")
+            i += 1
+            # send signal to STM32
+        elif data.data == 1:
+            print("TOF Sub : Right {i}")
+            i += 1
+            # send signal to STM32
+        elif data.data == 0:
+            print("TOF Sub : Stop {i}")
+            i += 1
+            # send signal to STM32
 
 def clean_up():
     rospy.loginfo("Sub node: Cleaning up...")
