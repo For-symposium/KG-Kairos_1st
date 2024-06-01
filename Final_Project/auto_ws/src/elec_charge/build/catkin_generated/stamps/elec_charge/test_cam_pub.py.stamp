@@ -287,8 +287,8 @@ if __name__ == '__main__':
         rospy.init_node('cam_motor_control_pubnode', anonymous=True)
         rospy.loginfo("Cam pub node : Start publishing")
         # rospy.Subscriber('t_course_cnt', Int32, t_course_cnt) # line tracing 
-        pub_motor = rospy.Publisher('control_cam', Int32, queue_size=10)
-        rate = rospy.Rate(10)
+        pub_motor = rospy.Publisher('control_cam', Int32, queue_size=1)
+        rate = rospy.Rate(20)
         threading.Thread(target=listener).start()
         publish_message()
 

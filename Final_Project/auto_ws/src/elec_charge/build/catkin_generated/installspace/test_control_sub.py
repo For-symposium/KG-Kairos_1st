@@ -81,7 +81,7 @@ def cam_motor_control_callback(data):
             i += 1
             control_bit = "00110001"
             # send_data(control_bit)
-        rate.sleep()
+        # rate.sleep()
         if data.data == -109:
             cam_mode = False
             zero_turn_dir = -1 # Zero turn Left
@@ -94,7 +94,7 @@ def cam_motor_control_callback(data):
             pub_control_cam.publish(-1000) # Unable cam publishing
             print(f"Cam Sub : Switch to IR mode and Zero turn dir is Right {i}")
             i += 1
-        rate.sleep()
+        # rate.sleep()
     elif data.data == -200:
         zero_turn_stop = True
     elif data.data == -300:
@@ -114,7 +114,7 @@ def IR_motor_control_callback(data):
             i += 1
             zero_turn_mode = True
             pub_control_cam.publish(2000) # Zero turn cam mode ON
-        rate.sleep()
+        # rate.sleep()
     elif cam_mode == False and zero_turn_mode == True:
         ##### Zero-turn #####
         if zero_turn_dir == -1:
@@ -148,7 +148,7 @@ def IR_motor_control_callback(data):
                 print(f"Zero turn Sub : Zero turn STOP // Normal Cam Mode ON {i}")
                 i += 1
             time.sleep(2)
-        rate.sleep()
+        # rate.sleep()
 
 def TOF_control_callback(data):
     global i
@@ -190,14 +190,13 @@ def send_data(control_bit):
 if __name__ == '__main__':
     try:
         rospy.init_node('motor_control_sub_node', anonymous=True)
-        rate = rospy.Rate(10)
+        # rate = rospy.Rate(10)
         # port = "/dev/ttyUSB0"
         # baudrate = 9600
         # ser = serial.Serial(port, baudrate, timeout=1)
         # threading.Thread(target=send_data(control_bit)).start()
-        pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=10) # Control Cam mode
+        pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=1) # Control Cam mode
         listener()
         
-
     except rospy.ROSInterruptException:
         print("Sub motor node : STOP")

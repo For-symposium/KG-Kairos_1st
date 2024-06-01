@@ -696,6 +696,13 @@
 			"path" : "/opt/ros/noetic/share/catkin/cmake/templates/script.py.in"
 		},
 		{
+			"path" : "src/functionalize_cam_pub.py"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/opt/ros/noetic/share/catkin/cmake/templates/script.py.in"
+		},
+		{
 			"isExternal" : true,
 			"path" : "/usr/src/googletest/CMakeLists.txt"
 		},

@@ -44,13 +44,14 @@ def func_test():
                 cy = int(M['m01'] / M['m00'])
 
                 if normal_pub_cam_mode: # if only normal driving mode
-                    print(f"Center point (Normal) : {cx} {i}")
+                    # print(f"Center point (Normal) : {cx} {i}")
                     i += 1
                     cv2.drawContours(roi, c, -1, (0, 0, 255), 1)
                     cv2.circle(roi, (cx, cy), 5, (0, 255, 0), -1)
 
                     epsilon = epsilon_offset * cv2.arcLength(c, True)
                     approx = cv2.approxPolyDP(c, epsilon, True)
+                    len_approx = len(approx)
 
                     sorted_points = sorted(approx, key=lambda point: point[0][1])
                     top_two_points = sorted_points[:2]
@@ -60,14 +61,17 @@ def func_test():
                     bottom_two_points = sorted_points_reverse[:2]
                     bottom_x_distance = abs(bottom_two_points[0][0][0] - bottom_two_points[1][0][0])
 
-                    for point in sorted_points:
-                        x, y = point[0]
-                        cv2.circle(roi, (x, y), 5, (255, 0, 0), -1)
-
-                    if len(approx) > 4:
-                        i = 0
-                        while i < 1000:
-                            another_func()
+                    if len_approx <= 4:
+                        for point in sorted_points:
+                            x, y = point[0]
+                            cv2.circle(roi, (x, y), 5, (255, 0, 0), -1)
+                    else:
+                        for point in sorted_points:
+                            x, y = point[0]
+                            cv2.circle(roi, (x, y), 5, (0, 0, 255), -1)
+                    
+                    print(f"number of approx : {len_approx}")
+                    time.sleep(0.05)
 
         except Exception as e:
             print(f"Exception STOP: {e}")
@@ -81,14 +85,9 @@ def func_test():
     cv2.destroyAllWindows()
     cap.release()
 
-def another_func():
-    global i
-    print(f"another_func {i}")
-    i += 1
-
 if __name__ == '__main__':
     try:
         func_test()
 
-    except:
-        print("STOP")
+    except Exception as e:
+        print(e)
