@@ -7,8 +7,8 @@ import rospy
 from std_msgs.msg import Int32
 
 # Set pin number
-XSHUT1_PIN = 7
-XSHUT2_PIN = 8
+XSHUT1_PIN = 15
+XSHUT2_PIN = 7
 
 # Declare global variable
 modestate = 0
@@ -62,7 +62,7 @@ def TOF_mode_pub():
 
 def TOF_GPIO_setup(XSHUT1_PIN ,XSHUT2_PIN):
     global sensor1, sensor2
-    
+
     GPIO.setup(XSHUT1_PIN, GPIO.OUT)
     GPIO.setup(XSHUT2_PIN, GPIO.OUT)
 

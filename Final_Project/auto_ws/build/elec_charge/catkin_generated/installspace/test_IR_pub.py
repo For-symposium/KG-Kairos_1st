@@ -8,15 +8,19 @@ import time
 import rospy
 from std_msgs.msg import Int32
 
-
 # 사용할 GPIO 핀 번호 (BCM 모드)
-IR_SENSOR_PIN_1 = 17 # GPIO 11
+# IR_SENSOR_PIN_1 = 17 # GPIO 11
 # IR_SENSOR_PIN = 11 # GPIO 23
-IR_SENSOR_PIN_2 = 23 # GPIO 16
+# IR_SENSOR_PIN_2 = 23 # GPIO 16
 # IR_SENSOR_PIN_3 = 16 # GPIO 36
 
+# Board mode
+IR_SENSOR_PIN_1 = 11 # BOARD
+IR_SENSOR_PIN_2 = 16 # BOARD
+
 # GPIO 설정
-GPIO.setmode(GPIO.BCM)
+# GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)  # Disable GPIO warnings
 GPIO.setup(IR_SENSOR_PIN_1, GPIO.IN)
 GPIO.setup(IR_SENSOR_PIN_2, GPIO.IN)

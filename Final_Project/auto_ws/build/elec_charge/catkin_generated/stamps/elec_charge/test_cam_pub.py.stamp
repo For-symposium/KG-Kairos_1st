@@ -1,11 +1,3 @@
-'''
-Problem:
-In the pass course, it also has approx more than 5. We should take care about this situation.
---> another bool sign? Not that simple. It detects approxes 4~6 sometimes.
-if (len(approx) >= 4) and (bottom-x-dist > top-x-dist), do not count
-However, roi didn't shrink
-'''
-
 import cv2
 import numpy as np
 import time
@@ -54,21 +46,17 @@ def publish_message():
         if not ret:
             break
 
-        # Yellow line
         height, width, _ = img.shape # 640x480
+
         roi_height = round(height * 0.95)
         roi_width = 0
         roi = img[roi_height:, roi_width:(width - roi_width)]
         img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        img_mask_yellow = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
-        cont_list, _ = cv2.findContours(img_mask_yellow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
+        # Yellow line
+        # img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
         # Black line
-        # roi_height_black = round(height * 0.9)
-        # roi_width_black = 0
-        # roi_black = img[roi_height_black:, roi_width_black:(width - roi_width_black)]
-        # img_cvt_black = cv2.cvtColor(roi_black, cv2.COLOR_BGR2HSV)
-        # img_mask_black = cv2.inRange(img_cvt_black, np.array([0, 0, 0]), np.array([200, 120, 50]))
+        img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 120, 50]))
+        cont_list, _ = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         offset = width // 4
         try:
@@ -299,8 +287,8 @@ if __name__ == '__main__':
         rospy.init_node('cam_motor_control_pubnode', anonymous=True)
         rospy.loginfo("Cam pub node : Start publishing")
         # rospy.Subscriber('t_course_cnt', Int32, t_course_cnt) # line tracing 
-        pub_motor = rospy.Publisher('control_cam', Int32, queue_size=10)
-        rate = rospy.Rate(10)
+        pub_motor = rospy.Publisher('control_cam', Int32, queue_size=1)
+        rate = rospy.Rate(20)
         threading.Thread(target=listener).start()
         publish_message()
 
