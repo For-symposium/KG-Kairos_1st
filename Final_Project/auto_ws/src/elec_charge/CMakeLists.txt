@@ -31,7 +31,7 @@ catkin_install_python(PROGRAMS
   src/proj_TOF_pub.py
   src/test_IR_pub.py
   src/functionalize_cam_pub.py
+  src/temp_TOF_pub.py
+  src/temp_robotarm.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
-# 9d7903718cb9f8aab984130974b7fae9320eb7b5..28efc4eae233c3f27e3d93cedb6a0477fcac91ba

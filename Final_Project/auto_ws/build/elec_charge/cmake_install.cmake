@@ -96,3 +96,11 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/elec_charge" TYPE PROGRAM FILES "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/build/elec_charge/catkin_generated/installspace/functionalize_cam_pub.py")
 endif()
 
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/elec_charge" TYPE PROGRAM FILES "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/build/elec_charge/catkin_generated/installspace/temp_TOF_pub.py")
+endif()
+
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/elec_charge" TYPE PROGRAM FILES "/home/jetson/auto_ws/KG-Kairos_1st/Final_Project/auto_ws/build/elec_charge/catkin_generated/installspace/temp_robotarm.py")
+endif()
+
