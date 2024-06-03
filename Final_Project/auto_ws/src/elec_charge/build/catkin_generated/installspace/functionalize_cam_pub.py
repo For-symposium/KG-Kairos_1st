@@ -16,12 +16,14 @@ class CamMotorControl:
         self.ir_mode = False
         self.zero_turn_cam_mode = False
         self.T_course_count = 0
-        self.T_course_stop_threshold_start = None
+        self.T_course_stop_threshold_departure = None
+        self.T_course_stop_threshold_goback = None
         self.TOF_mode = False
         self.TOF_mode_pub = True
         self.epsilon_offset = 0.035
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         self.pub_motor = rospy.Publisher('control_cam', Int32, queue_size=1)
+        self.pub_client = rospy.Publisher('client_message', Int32, queue_size=1)
         self.rate = rospy.Rate(10)
         self.roi_height = 0
         self.roi_width = 0
@@ -29,27 +31,35 @@ class CamMotorControl:
         self.all_false = False
 
     def switching_modes(self, target_mode):
-        if target_mode == self.driving_cam_mode:
+        # if target_mode == self.driving_cam_mode:
+        if target_mode == 1:
+            print("\ttarget_mode == self.driving_cam_mode")
             self.driving_cam_mode = True
             self.ir_mode = False
             self.zero_turn_cam_mode = False
             self.TOF_mode = False
-        elif target_mode == self.ir_mode:
+        # elif target_mode == self.ir_mode:
+        elif target_mode == 2:
+            print("\ttarget_mode == self.ir_mode")
             self.driving_cam_mode = False
             self.ir_mode = True
             self.zero_turn_cam_mode = False
             self.TOF_mode = False
-        elif target_mode == self.zero_turn_cam_mode:
+        # elif target_mode == self.zero_turn_cam_mode:
+        elif target_mode == 3:
+            print("\ttarget_mode == self.zero_turn_cam_mode")
             self.driving_cam_mode = False
             self.ir_mode = False
             self.zero_turn_cam_mode = True
             self.TOF_mode = False
-        elif target_mode == self.TOF_mode:
+        elif target_mode == 4:
+            print("\ttarget_mode == self.TOF_mode")
             self.driving_cam_mode = False
             self.ir_mode = False
             self.zero_turn_cam_mode = False
             self.TOF_mode = True
-        elif target_mode == self.all_false:
+        elif target_mode == 5:
+            print("\ttarget_mode == ALL FALSE")
             self.driving_cam_mode = False
             self.ir_mode = False
             self.zero_turn_cam_mode = False
@@ -74,11 +84,13 @@ class CamMotorControl:
             rospy.Subscriber('vehicle_position', Int32, self.from_web_signal).unregister()
             self.Done_subscribed = True
             if data.data == 13:
+                self.pub_client.publish(2)
                 self.zero_turn_arr_start = [-1, 0, 0, -1]
                 self.zero_turn_arr_end = [1, 0, 0, 1, 1]
                 self.T_course_stop_threshold_departure = len(self.zero_turn_arr_start)
                 self.T_course_stop_threshold_goback = len(self.zero_turn_arr_end)
             elif data.data == 22:
+                self.pub_client.publish(2)
                 self.zero_turn_arr_start = [1, 0, 1]
                 self.zero_turn_arr_end = [-1, 0, -1, -1]
                 self.T_course_stop_threshold_departure = len(self.zero_turn_arr_start)
@@ -90,14 +102,10 @@ class CamMotorControl:
             self.i += 1
 
     def control_cam_mode(self, data):
-        if data.data == 1000:
-            print(f"Control cam mode Function : Cam mode ON {self.i}")
-            self.i += 1
-            self.switching_modes(self.driving_cam_mode)
-        elif data.data == 2000:
+        if data.data == 2000:
             print(f"Control cam mode Function : Zero turn Cam mode ON {self.i}")
             self.i += 1
-            self.switching_modes(self.zero_turn_cam_mode)
+            self.switching_modes(3) # Zero turn cam mode
 
     def process_contours_0(self, cont_list, img, width, roi):
         # Control overall offset
@@ -111,6 +119,9 @@ class CamMotorControl:
             self.process_switch_mode_1(c, cx, cy, roi, width, offset)
         elif self.zero_turn_cam_mode:
             self.process_zero_turn_mode_2(c, cx, cy, roi, width, offset)
+        elif self.ir_mode:
+            print(f"IR_mode {self.i}")
+            self.i += 1
         else:
             self.pub_motor.publish(0)
             print(f"Nothing mode {self.i}")
@@ -207,7 +218,7 @@ class CamMotorControl:
         print(f"Cam pub : Switch to IR sensor mode {self.i}")
         self.i += 1
         self.pub_motor.publish(turn_command)
-        self.switching_modes(self.ir_mode)
+        self.switching_modes(2) # IR mode
         self.available_switch_to_ir = False
         self.T_course_count += 1
         time.sleep(2)
@@ -261,16 +272,16 @@ class CamMotorControl:
             if zero_turn_offset <= cx <= width-zero_turn_offset:
                 print(f"Cam Pub node : Zero turn STOP {self.i}")
                 self.i += 1
-                print(f"\tDebug before TOF : {self.T_course_count} == {self.T_course_stop_threshold_start}")
-                if len(self.zero_turn_arr_start) == 0 or (self.T_course_count == self.T_course_stop_threshold_start): # time to TOF
+                print(f"\tDebug before TOF : {self.T_course_count} vs {self.T_course_stop_threshold_departure}")
+                if len(self.zero_turn_arr_start) == 0 or (self.T_course_count == self.T_course_stop_threshold_departure): # time to TOF
                     print(f"\tIn front of the EV. Now TOF part. {self.i}")
                     self.i += 1
-                    self.switching_modes(self.tof_mode)
+                    self.switching_modes(4) # TOF mode
                     self.pub_motor.publish(-300)
                     time.sleep(2)
                 else:
                     self.pub_motor.publish(-200)
-                    self.switching_modes(self.driving_cam_mode)
+                    self.switching_modes(1) # driving mode
                     print(f"\tReturn to normal driving mode")
             else:
                 print(f"Cam Pub node : Do Zero turn until stop signal {self.i}")
@@ -301,9 +312,9 @@ class CamMotorControl:
             roi = img[self.roi_height:, self.roi_width:(width - self.roi_width)]
             img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             # Yellow line
-            # img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+            img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
             # Black line
-            img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 120, 50]))
+            # img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 120, 50]))
             cont_list, _ = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             try:

@@ -48,223 +48,174 @@ import rospy
 import time
 from std_msgs.msg import Int32
 
-cam_mode = True
-tof_mode = False
-ir_mode = False
-manual_mode = False
+class MainControlMotor:
+    def __init__(self):
+        self.i = 0
+        self.cam_mode = True
+        self.ir_mode = False
+        self.zero_turn_mode = False
+        self.zero_turn_dir = 0  # Left(-1), Right(1)
+        self.zero_turn_stop = False
+        self.tof_mode = False
+        self.robotarm_mode = False
+        self.tof_cnt = 0
+        self.manual_mode = False
 
-def set_modes(select_mode):
-    global cam_mode, ir_mode, zero_turn_mode, tof_mode, robotarm_mode, manual_mode
-    if select_mode == cam_mode:
-        cam_mode = True
-        ir_mode = False
-        zero_turn_mode = False
-        tof_mode = False
-        robotarm_mode = False
-        manual_mode = False
-    elif select_mode == ir_mode:
-        cam_mode = False
-        ir_mode = True
-        zero_turn_mode = False
-        tof_mode = False
-        robotarm_mode = False
-        manual_mode = False
-    elif select_mode == zero_turn_mode:
-        cam_mode = False
-        ir_mode = False
-        zero_turn_mode = True
-        tof_mode = False
-        robotarm_mode = False
-        manual_mode = False
-    elif select_mode == tof_mode:
-        cam_mode = False
-        ir_mode = False
-        zero_turn_mode = False
-        tof_mode = True
-        robotarm_mode = False
-        manual_mode = False
-    elif select_mode == robotarm_mode:
-        cam_mode = False
-        ir_mode = False
-        zero_turn_mode = False
-        tof_mode = False
-        robotarm_mode = False
-        manual_mode = False
-    else:
-        cam_mode = False
-        ir_mode = False
-        zero_turn_mode = False
-        tof_mode = False
-        robotarm_mode = False
-        manual_mode = True
+        self.pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=1)  # Control Cam mode
+        self.pub_robotarm = rospy.Publisher('pub_robotarm', Int32, queue_size=1)  # Enable robotarm
 
-i = 0
-cam_mode = True
-zero_turn_mode = False
-zero_turn_dir = 0 # Left(-1), Right(1)
-zero_turn_stop = False
-# ser = None
-control_bit = "00000000"  # Initialize control bit
-rate = None  # Define rate globally to use in callbacks
-web_sub = True
-tof_mode = False
-robotarm_mode = False
-tof_cnt = 0
+    def set_modes(self, select_mode):
+        if select_mode == 1:
+            self.cam_mode = True
+            self.ir_mode = False
+            self.zero_turn_mode = False
+            self.tof_mode = False
+            self.robotarm_mode = False
+            self.manual_mode = False
+        elif select_mode == 2:
+            self.cam_mode = False
+            self.ir_mode = True
+            self.zero_turn_mode = False
+            self.tof_mode = False
+            self.robotarm_mode = False
+            self.manual_mode = False
+        elif select_mode == 3:
+            self.cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_mode = True
+            self.tof_mode = False
+            self.robotarm_mode = False
+            self.manual_mode = False
+        elif select_mode == 4:
+            self.cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_mode = False
+            self.tof_mode = True
+            self.robotarm_mode = False
+            self.manual_mode = False
+        elif select_mode == 5:
+            self.cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_mode = False
+            self.tof_mode = False
+            self.robotarm_mode = True
+            self.manual_mode = False
+        else:
+            print("No selected set modes")
+            self.cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_mode = False
+            self.tof_mode = False
+            self.robotarm_mode = False
+            self.manual_mode = True
 
-def cam_mode_control(cam_data):
-    global cam_mode, ir_mode, zero_turn_mode, tof_mode, robotarm_mode, manual_mode, i, zero_turn_dir
-    if cam_data == 10:
-        print(f"Cam Sub : GO {i}")
-        i += 1
-        # control_bit = "11110001"
-        # send_data(control_bit)
-    elif cam_data == 1:
-        print(f"Cam Sub : Right {i}")
-        i += 1
-        # control_bit = "11100000"
-        # send_data(control_bit)
-    elif cam_data == -1:
-        print(f"Cam Sub : Left {i}")
-        i += 1
-        # control_bit = "01010001"
-        # send_data(control_bit)
-    elif cam_data == 0:
-        print(f"Cam Sub : STOP {i}")
-        i += 1
-        # control_bit = "00110001"
-        # send_data(control_bit)
+    def cam_mode_control(self, cam_data):
+        if cam_data == 10:
+            self.log("Cam Sub : GO")
+            # STM32 motor control
+        elif cam_data == 1:
+            self.log("Cam Sub : Right")
+            # STM32 motor control
+        elif cam_data == -1:
+            self.log("Cam Sub : Left")
+            # STM32 motor control
+        elif cam_data == 0:
+            self.log("Cam Sub : STOP")
+            # STM32 motor control
 
-    if cam_data == -109:
-        # cam_mode = False
-        zero_turn_dir = -1 # Zero turn Left
-        set_modes(ir_mode)
-        print(f"Cam Sub : Switch to IR mode and Zero turn dir is Left {i}")
-        i += 1
-    elif cam_data == -111:
-        # cam_mode = False
-        zero_turn_dir = 1 # Zero turn Right
-        set_modes(ir_mode)
-        print(f"Cam Sub : Switch to IR mode and Zero turn dir is Right {i}")
-        i += 1
+        if cam_data == -109:
+            self.zero_turn_dir = -1  # Zero turn Left
+            self.set_modes(2)  # ir_mode
+            self.log("Cam Sub : Switch to IR mode and Zero turn dir is Left")
+        elif cam_data == -111:
+            self.zero_turn_dir = 1  # Zero turn Right
+            self.set_modes(2)  # ir_mode
+            self.log("Cam Sub : Switch to IR mode and Zero turn dir is Right")
 
-def cam_motor_control_callback(data):
-    global cam_mode, ir_mode, zero_turn_mode, tof_mode, robotarm_mode, manual_mode, i, zero_turn_dir, zero_turn_stop
-    if cam_mode == True:
-        cam_mode_control(data.data)
-    elif data.data == -200:
-        zero_turn_stop = True
-        set_modes(cam_mode)
-    elif data.data == -300:
-        zero_turn_stop = True
-        set_modes(tof_mode)
+    def cam_motor_control_callback(self, data):
+        if self.cam_mode:
+            self.cam_mode_control(data.data)
+        elif data.data == -200:  # Zero turn stop
+            self.zero_turn_stop = True
+            self.set_modes(1)  # cam_mode
+        elif data.data == -300:  # go to TOF mode
+            self.zero_turn_stop = True
+            self.set_modes(4)  # tof_mode
 
-def IR_motor_control_callback(data):
-    global i, cam_mode, zero_turn_dir, zero_turn_mode, control_bit, rate, zero_turn_stop
-    if set_modes(ir_mode):
-        if zero_turn_mode == False:
+    def IR_motor_control_callback(self, data):
+        if self.ir_mode:
             if data.data == 10:
-                print(f"IR Sub : GO {i}")
-                i += 1
-                control_bit = "11110001"
-                # send_data(control_bit)
+                self.log("IR Sub : GO")
+                # STM32 motor control
             elif data.data == -120:
-                print(f"IR Sub : Do Zero turn {i}")
-                i += 1
-                pub_control_cam.publish(2000) # Zero turn cam mode ON
-                zero_turn_mode = True
-        elif zero_turn_mode == True:
-            set_modes(zero_turn_mode)
-            Zero_turn_control(zero_turn_dir)
+                self.log("IR Sub : Do Zero turn")
+                self.pub_control_cam.publish(2000)  # Zero turn cam mode ON
+                self.set_modes(3)  # zero_turn_mode
+        elif self.zero_turn_mode:
+            self.Zero_turn_control(self.zero_turn_dir)
 
-def Zero_turn_control(dir):
-    global i, zero_turn_mode, cam_mode
-    if zero_turn_mode == True :
+    def Zero_turn_control(self, dir):
         if dir == -1:
-            print(f"Zero turn Sub : Turn Left {i}")
-            # 1. Signal to STM32 Zero turn Left
-            i += 1
+            self.log("Zero turn Sub : Turn Left")
+            # STM32 motor control
         elif dir == 1:
-            print(f"Zero turn Sub : Turn Right {i}")
-            i += 1
-            ###############################
-            ########## Zero turn ##########
-            ###############################
-            # 1. Signal to STM32 Zero turn Left
-            # 2. If camera cx is center, Stop signal
-        if zero_turn_stop: ##?? zero_turn_stop => 조건에 따라 set_modes를 변경하도록! => 변경시킬 코드 필요
-            if set_modes(tof_mode):#-300
-                zero_turn_mode = False
-                print(f"Zero turn Sub : TOF mode ON {i}")
-            elif set_modes(cam_mode):
-                zero_turn_mode = False
-                # 3. Switch to cam mode again
-                # pub_control_cam.publish(1000) # After zero turn, Enable cam publishing
-                print(f"Zero turn Sub : Zero turn STOP // Normal Cam Mode ON {i}")
-                i += 1
+            self.log("Zero turn Sub : Turn Right")
+            # STM32 motor control
+        if self.zero_turn_stop: # if come to center
+            if self.tof_mode:
+                self.zero_turn_mode = False
+                self.log("Zero turn Sub : TOF mode ON")
+            elif self.cam_mode: # Again to Normal mode
+                self.zero_turn_mode = False
+                self.log("Zero turn Sub : Zero turn STOP // Normal Cam Mode ON")
 
-def TOF_control_callback(data):
-    global i, robotarm_mode, TOF_mode, tof_cnt
-    if tof_mode == True:
-        if data.data == 10:
-            print(f"TOF Sub : GO {i}")
-            i += 1
-            # send signal to STM32
-        elif data.data == -1:
-            print(f"TOF Sub : Left {i}")
-            i += 1
-            # send signal to STM32
-        elif data.data == 1:
-            print(f"TOF Sub : Right {i}")
-            i += 1
-            # send signal to STM32
-        elif data.data == 0:
-            print(f"TOF Sub : Stop {i}")
-            i += 1
-            # send signal to STM32
-        if tof_cnt == 15:
-            pub_robotarm.publish(400)
-            set_modes(robotarm_mode)
-            print(f"\nRobotarm mode ON\n")
-            
-def robotarm_callback(data):
-    global i, robotarm_mode, TOF_mode
-    if set_modes(robotarm_mode):
-        if data.data == -400: ##zeroturn
-            print(f"##### Robotarm mode OFF {i} #####")
-            i += 1
-            # Should change mode properly
-            robotarm_mode = False
-            TOF_mode = False
+    def TOF_control_callback(self, data):
+        if self.tof_mode:
+            if data.data == 10:
+                # STM32 motor control
+                self.log("TOF Sub : GO")
+            # elif data.data == -1:
+            #     # STM32 motor control
+            #     self.log("TOF Sub : Left")
+            # elif data.data == 1:
+            #     # STM32 motor control
+            #     self.log("TOF Sub : Right")
+            # elif data.data == 0:
+            #     # STM32 motor control
+            #     self.log("TOF Sub : STOP")
+                self.tof_cnt += 1
+            if self.tof_cnt == 5:
+                self.pub_robotarm.publish(400)
+                self.set_modes(5)  # robotarm_mode
+                self.log("Robotarm mode ON")
 
-def clean_up():
-    rospy.loginfo("Sub node: Cleaning up...")
+    def robotarm_callback(self, data):
+        if self.robotarm_mode:
+            if data.data == -400:  # Done Charging from robotarm 
+                self.log("Robotarm mode OFF")
+                self.robotarm_mode = False
+                self.tof_mode = False
 
-def listener():
-    rospy.loginfo("Sub node : Start Subscribing")
-    rospy.Subscriber('control_cam', Int32, cam_motor_control_callback)
-    rospy.Subscriber('control_IR', Int32, IR_motor_control_callback)
-    rospy.Subscriber('control_TOF', Int32, TOF_control_callback)
-    rospy.Subscriber('control_robotarm', Int32, robotarm_callback)
-    rospy.on_shutdown(clean_up)
-    rospy.spin()
+    def listener(self):
+        rospy.loginfo("Sub node : Start Subscribing")
+        rospy.Subscriber('control_cam', Int32, self.cam_motor_control_callback)
+        rospy.Subscriber('control_IR', Int32, self.IR_motor_control_callback)
+        rospy.Subscriber('control_TOF', Int32, self.TOF_control_callback)
+        rospy.Subscriber('control_robotarm', Int32, self.robotarm_callback)
+        rospy.on_shutdown(self.clean_up)
+        rospy.spin()
 
-def send_data(control_bit):
-    int_data = int(control_bit, 2)
-    byte_data = int_data.to_bytes(1, byteorder='big')
-    # ser.write(byte_data)
-    rospy.loginfo(f"Sending: {bin(int_data)[2:].zfill(8)}")
+    def clean_up(self):
+        rospy.loginfo("Sub node: Cleaning up...")
+
+    def log(self, message):
+        self.i += 1
+        print(f"{message} {self.i}")
 
 if __name__ == '__main__':
     try:
         rospy.init_node('motor_control_sub_node', anonymous=True)
-        # rate = rospy.Rate(10)
-        # port = "/dev/ttyUSB0"
-        # baudrate = 9600
-        # ser = serial.Serial(port, baudrate, timeout=1)
-        # threading.Thread(target=send_data(control_bit)).start()
-        pub_control_cam = rospy.Publisher('pub_control_cam', Int32, queue_size=1) # Control Cam mode
-        pub_robotarm = rospy.Publisher('pub_robotarm', Int32, queue_size=1) # Enable robotarm
-        listener()
-        
+        main_control_motor = MainControlMotor()
+        main_control_motor.listener()
     except rospy.ROSInterruptException:
-        print("Sub motor node : STOP")
+        print("ROSInterruptException")
