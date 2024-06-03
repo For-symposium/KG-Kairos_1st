@@ -15,7 +15,7 @@ def Robotarm_sub(data):
                     pub_robotarm.publish(-400)
                     break
     except KeyboardInterrupt:
-        print("IR mode pub : Keyboard Interrupted")
+        print("Robotarm mode pub : Keyboard Interrupted")
 
 def listener():
     rospy.Subscriber('pub_robotarm', Int32, Robotarm_sub)
