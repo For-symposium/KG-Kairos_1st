@@ -21,9 +21,9 @@ def TOF_mode_pub():
 
 if __name__=='__main__':
     try:
-        rospy.init_node('TOF pub node', anonymous=True)
+        rospy.init_node('TOF_pub_node', anonymous=True)
         pub_TOF = rospy.Publisher('control_TOF', Int32, queue_size=1)
         rate = rospy.Rate(1)
         TOF_mode_pub()
     except rospy.ROSInterruptException:
-        print("TOF mode pub : Finish Publishing")
+        print("TOF_mode_pub : Finish Publishing")

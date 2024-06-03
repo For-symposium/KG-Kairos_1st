@@ -49,6 +49,25 @@ import rospy
 import time
 from std_msgs.msg import Int32
 
+cam_mode = True
+tof_mode = False
+ir_mode = False
+
+def set_modes(select_mode):
+    global cam_mode, ir_mode, tof_mode
+    if select_mode == cam_mode:
+        cam_mode = True
+        ir_mode = False
+        tof_mode = False
+    elif select_mode == ir_mode:
+        cam_mode = False
+        ir_mode = True
+        tof_mode = False
+    elif select_mode == tof_mode:
+        cam_mode = False
+        ir_mode = False
+        tof_mode = True
+
 i = 0
 cam_mode = True
 zero_turn_mode = False
@@ -67,33 +86,33 @@ def cam_mode_control(cam_data):
     if cam_data == 10:
         print(f"Cam Sub : GO {i}")
         i += 1
-        control_bit = "11110001"
+        # control_bit = "11110001"
         # send_data(control_bit)
     elif cam_data == 1:
         print(f"Cam Sub : Right {i}")
         i += 1
-        control_bit = "11100000"
+        # control_bit = "11100000"
         # send_data(control_bit)
     elif cam_data == -1:
         print(f"Cam Sub : Left {i}")
         i += 1
-        control_bit = "01010001"
+        # control_bit = "01010001"
         # send_data(control_bit)
     elif cam_data == 0:
         print(f"Cam Sub : STOP {i}")
         i += 1
-        control_bit = "00110001"
+        # control_bit = "00110001"
         # send_data(control_bit)
     if cam_data == -109:
         cam_mode = False
         zero_turn_dir = -1 # Zero turn Left
-        pub_control_cam.publish(-1000) # Unable cam publishing
+        # pub_control_cam.publish(-1000) # Unable cam publishing
         print(f"Cam Sub : Switch to IR mode and Zero turn dir is Left {i}")
         i += 1
     elif cam_data == -111:
         cam_mode = False
         zero_turn_dir = 1 # Zero turn Right
-        pub_control_cam.publish(-1000) # Unable cam publishing
+        # pub_control_cam.publish(-1000) # Unable cam publishing
         print(f"Cam Sub : Switch to IR mode and Zero turn dir is Right {i}")
         i += 1
 
@@ -104,6 +123,7 @@ def cam_motor_control_callback(data):
     elif data.data == -200:
         zero_turn_stop = True
     elif data.data == -300:
+        zero_turn_stop = True
         TOF_mode = True
         cam_mode = False
 
@@ -119,8 +139,8 @@ def IR_motor_control_callback(data):
             elif data.data == -120:
                 print(f"IR Sub : Do Zero turn {i}")
                 i += 1
-                zero_turn_mode = True
                 pub_control_cam.publish(2000) # Zero turn cam mode ON
+                zero_turn_mode = True
         elif cam_mode == False and zero_turn_mode == True:
             Zero_turn_control(zero_turn_dir)
 
@@ -142,7 +162,7 @@ def Zero_turn_control(dir):
                 zero_turn_mode = False
                 # 3. Switch to cam mode again
                 cam_mode = True
-                pub_control_cam.publish(1000) # After zero turn, Enable cam publishing
+                # pub_control_cam.publish(1000) # After zero turn, Enable cam publishing
                 print(f"Zero turn Sub : Zero turn STOP // Normal Cam Mode ON {i}")
                 i += 1
     elif dir == 1:
@@ -161,7 +181,7 @@ def Zero_turn_control(dir):
                 zero_turn_mode = False
                 # 3. Switch to cam mode again
                 cam_mode = True
-                pub_control_cam.publish(1000) # After zero turn, Enable cam publishing
+                # pub_control_cam.publish(1000) # After zero turn, Enable cam publishing
                 print(f"Zero turn Sub : Zero turn STOP // Normal Cam Mode ON {i}")
                 i += 1
 

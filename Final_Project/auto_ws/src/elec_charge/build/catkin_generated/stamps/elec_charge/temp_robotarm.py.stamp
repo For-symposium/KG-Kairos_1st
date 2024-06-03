@@ -23,7 +23,7 @@ def listener():
 
 if __name__=='__main__':
     try:
-        rospy.init_node('robotarm pub node', anonymous=True)
+        rospy.init_node('robotarm_pub_node', anonymous=True)
         rospy.loginfo('Robotarm node')
         pub_robotarm = rospy.Publisher('control_robotarm', Int32, queue_size=1)
         rate = rospy.Rate(1)
