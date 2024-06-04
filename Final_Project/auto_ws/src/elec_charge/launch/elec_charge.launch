@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="elec_charge" type="functionalize_cam_pub.py" name="func_cam" output="screen" launch-prefix="gnome-terminal -- " />
+    <node pkg="elec_charge" type="proj_control_motor.py" name="control_motor" output="screen" launch-prefix="gnome-terminal -- " />
+</launch>
