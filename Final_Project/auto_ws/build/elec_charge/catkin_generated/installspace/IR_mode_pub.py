@@ -60,7 +60,7 @@ def IR_mode_pub():
 
 if __name__ == '__main__':
     try:
-        rospy.init_node('IR pub node', anonymous=True)
+        rospy.init_node('IR_pub_node', anonymous=True)
         pub_IR = rospy.Publisher('control_IR', Int32, queue_size=10)
         rate = rospy.Rate(10)
         IR_mode_pub()

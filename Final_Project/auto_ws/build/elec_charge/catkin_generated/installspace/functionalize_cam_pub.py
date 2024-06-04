@@ -13,17 +13,67 @@ class CamMotorControl:
         self.zero_turn_arr = []
         self.back_zero_turn_arr = []
         self.driving_cam_mode = True
+        self.ir_mode = False
         self.zero_turn_cam_mode = False
         self.T_course_count = 0
-        self.T_course_stop_threshold = 0
+        self.T_course_stop_threshold_departure = None
+        self.T_course_stop_threshold_goback = None
         self.TOF_mode = False
-        self.epsilon_offset = 0.03
+        self.TOF_mode_pub = True
+        self.epsilon_offset = 0.035
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        self.pub_motor = rospy.Publisher('control_cam', Int32, queue_size=10)
+        self.pub_motor = rospy.Publisher('control_cam', Int32, queue_size=1)
+        self.pub_client = rospy.Publisher('client_message', Int32, queue_size=1)
         self.rate = rospy.Rate(10)
         self.roi_height = 0
         self.roi_width = 0
         self.available_switch_to_ir = True # Prevent from publishing multiple times
+        self.all_false_mode = False
+        self.after_charging_zero_turn_cam_mode = False
+        
+    def switching_modes(self, target_mode):
+        if target_mode == 1:
+            print("\ttarget_mode == self.driving_cam_mode")
+            self.driving_cam_mode = True
+            self.ir_mode = False
+            self.zero_turn_cam_mode = False
+            self.TOF_mode = False
+            self.after_charging_zero_turn_cam_mode = False
+        elif target_mode == 2:
+            print("\ttarget_mode == self.ir_mode")
+            self.driving_cam_mode = False
+            self.ir_mode = True
+            self.zero_turn_cam_mode = False
+            self.TOF_mode = False
+            self.after_charging_zero_turn_cam_mode = False
+        elif target_mode == 3:
+            print("\ttarget_mode == self.Start_zero_turn_cam_mode")
+            self.driving_cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_cam_mode = True
+            self.TOF_mode = False
+            self.after_charging_zero_turn_cam_mode = False
+        elif target_mode == 4:
+            print("\ttarget_mode == self.TOF_mode")
+            self.driving_cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_cam_mode = False
+            self.TOF_mode = True
+            self.after_charging_zero_turn_cam_mode = False
+        elif target_mode == "after_charging_zero_turn_cam_mode":
+            print("\ttarget_mode == self.End_zero_turn_cam_mode")
+            self.driving_cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_cam_mode = True
+            self.TOF_mode = False
+            self.after_charging_zero_turn_cam_mode = True
+        elif target_mode == 0:
+            print("\ttarget_mode == ALL FALSE")
+            self.driving_cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_cam_mode = False
+            self.TOF_mode = False
+            self.after_charging_zero_turn_cam_mode = False
 
     def initialize_camera(self):
         if not self.cap.isOpened():
@@ -44,32 +94,31 @@ class CamMotorControl:
             rospy.Subscriber('vehicle_position', Int32, self.from_web_signal).unregister()
             self.Done_subscribed = True
             if data.data == 13:
-                self.zero_turn_arr = [-1, 0, 0, -1, 1, 1, 0, 0, 1, 1]
-                self.T_course_stop_threshold = 4
+                self.pub_client.publish(2)
+                self.zero_turn_arr = [-1, 0, 0, -1, 1, 0, 0, 1, 1]
+                # self.T_course_stop_threshold_departure = len(self.zero_turn_arr)
+                self.T_course_stop_threshold_departure = 4
+                self.T_course_stop_threshold_goback = len(self.zero_turn_arr)
             elif data.data == 22:
-                self.zero_turn_arr = [1, 0, 1, -1, -1, 0, -1, -1]
-                self.T_course_stop_threshold = 3
+                self.pub_client.publish(2)
+                self.zero_turn_arr = [1, 0, 1, -1, 0, -1, -1]
+                self.T_course_stop_threshold_departure = 3
+                self.T_course_stop_threshold_goback = len(self.zero_turn_arr)
             else:
                 print(f"Error! Generate zero turn! {self.i}")
                 self.i += 1
-            print(f"Receive from website, Zero turn array : {self.zero_turn_arr} {self.i}")
+            print(f"Receive from website, Start Zero turn array : {self.zero_turn_arr} {self.i}")
             self.i += 1
-            time.sleep(1)
 
     def control_cam_mode(self, data):
-        if data.data == -1000:
-            print(f"Control cam mode Function : Cam mode OFF {self.i}")
-            self.i += 1
-            self.driving_cam_mode = False
-        elif data.data == 1000:
-            print(f"Control cam mode Function : Cam mode ON {self.i}")
-            self.i += 1
-            self.driving_cam_mode = True
-        elif data.data == 2000:
+        if data.data == 2000: # Start Zero turn cam
             print(f"Control cam mode Function : Zero turn Cam mode ON {self.i}")
             self.i += 1
-            self.driving_cam_mode = False
-            self.zero_turn_cam_mode = True
+            self.switching_modes(3) # Zero turn cam mode
+        elif data.data == 2100:
+            print(f"Control cam mode Function : After charging Zero turn Cam mode ON {self.i}")
+            self.i += 1
+            self.switching_modes("after_charging_zero_turn_cam_mode")
 
     def process_contours_0(self, cont_list, img, width, roi):
         # Control overall offset
@@ -82,7 +131,10 @@ class CamMotorControl:
         if self.driving_cam_mode:
             self.process_switch_mode_1(c, cx, cy, roi, width, offset)
         elif self.zero_turn_cam_mode:
-            self.process_zero_turn_mode_2(c, cx, cy, roi, width, offset)
+            self.process_start_zero_turn_mode_2(c, cx, cy, roi, width, offset)
+        elif self.ir_mode:
+            print(f"IR_mode {self.i}")
+            self.i += 1
         else:
             self.pub_motor.publish(0)
             print(f"Nothing mode {self.i}")
@@ -149,14 +201,13 @@ class CamMotorControl:
                 self.pass_t_course_1_2(roi, cx, approx, width, offset, bottom_two_points)
 
             # For debugging
-            elif top_x_distance <= bottom_x_distance:
-                self.Should_not_pop_array()
+            # elif top_x_distance <= bottom_x_distance:
+            #     self.Should_not_pop_array()
 
             # There is no zero turn case
-            elif len(self.zero_turn_arr) == 0:
-                print(f"Cam pub : NO Zero turn array {self.i}")
-                self.i += 1
-                return
+            # elif len(self.zero_turn_arr) == 0:
+            #     print(f"Cam pub : NO Zero turn array {self.i}")
+            #     self.i += 1
 
     def normal_driving_case_1_0(self, cx, width, offset):
         mid = (width - 2 * self.roi_width) // 2
@@ -180,7 +231,7 @@ class CamMotorControl:
         print(f"Cam pub : Switch to IR sensor mode {self.i}")
         self.i += 1
         self.pub_motor.publish(turn_command)
-        self.driving_cam_mode = False
+        self.switching_modes(2) # IR mode
         self.available_switch_to_ir = False
         self.T_course_count += 1
         time.sleep(2)
@@ -214,7 +265,7 @@ class CamMotorControl:
         self.i += 1
         self.pub_motor.publish(10)
 
-    def process_zero_turn_mode_2(self, c, cx, cy, roi, width, offset):
+    def process_start_zero_turn_mode_2(self, c, cx, cy, roi, width, offset):
         zero_turn_offset = width * 0.49
         print(f"{zero_turn_offset} <= {cx} <= {width-zero_turn_offset}")
         print(f"Center point (Zero turn) : {cx}")
@@ -234,12 +285,27 @@ class CamMotorControl:
             if zero_turn_offset <= cx <= width-zero_turn_offset:
                 print(f"Cam Pub node : Zero turn STOP {self.i}")
                 self.i += 1
-                self.pub_motor.publish(-200)
-                self.zero_turn_cam_mode = False
-                self.driving_cam_mode = True
-                if self.T_course_count == self.T_course_stop_threshold:
-                    print(f"\nIn front of the EV. Now TOF part. {self.i}")
-                    self.TOF_mode = True
+                '''
+                Additional func
+                - just_zero_turn_mode -> After charging zero turn mode(-500)
+                - Go back zero turn movement -> driving mode(-200), Stop at the starting point(all stop)
+                '''
+                if self.after_charging_zero_turn_cam_mode:
+                    self.pub_motor.publish(-500)
+                    self.switching_modes(1) # driving mode
+                    print(f"\tAfter charging zero turn cam mode -> driving mode {self.i}")
+                    self.i += 1
+                    time.sleep(2)
+                elif (self.T_course_count == self.T_course_stop_threshold_departure): # time to TOF
+                    print(f"\tIn front of the EV. Now TOF part. {self.i}")
+                    self.i += 1
+                    self.switching_modes(4) # TOF mode
+                    self.pub_motor.publish(-300)
+                    time.sleep(2)
+                else:
+                    self.pub_motor.publish(-200)
+                    self.switching_modes(1) # driving mode
+                    print(f"\tReturn to normal driving mode")
                     time.sleep(2)
             else:
                 print(f"Cam Pub node : Do Zero turn until stop signal {self.i}")
@@ -270,16 +336,15 @@ class CamMotorControl:
             roi = img[self.roi_height:, self.roi_width:(width - self.roi_width)]
             img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             # Yellow line
-            # img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+            img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
             # Black line
-            img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 120, 50]))
+            # img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 120, 50]))
             cont_list, _ = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             try:
                 if self.TOF_mode:
                     print(f"Change State to TOF mode {self.i}")
                     self.i += 1
-                    self.pub_motor.publish(-300)
                 elif cont_list:
                     self.process_contours_0(cont_list, img, width, roi)
                 else:
@@ -305,7 +370,6 @@ class CamMotorControl:
 if __name__ == '__main__':
     rospy.init_node('cam_motor_control_pubnode', anonymous=True)
     rospy.loginfo("Cam pub node : Start publishing")
-    
     cam_motor_control = CamMotorControl()
     threading.Thread(target=cam_motor_control.subscribe_topics).start()
     cam_motor_control.publish_message()

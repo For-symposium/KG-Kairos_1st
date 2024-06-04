@@ -34,5 +34,6 @@ catkin_install_python(PROGRAMS
   src/temp_TOF_pub.py
   src/temp_robotarm.py
   src/charging_state.py
+  src/add_manual_mode.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

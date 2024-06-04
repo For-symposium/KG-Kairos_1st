@@ -260,13 +260,8 @@ class CamMotorControl:
                 self.i += 1
                 self.pub_motor.publish(1)
 
-    def Should_not_pop_array(self):
-        print(f"Should not pop zero turn array!! Just Go. {self.i}")
-        self.i += 1
-        self.pub_motor.publish(10)
-
     def process_start_zero_turn_mode_2(self, c, cx, cy, roi, width, offset):
-        zero_turn_offset = width * 0.49
+        zero_turn_offset = width * 0.48
         print(f"{zero_turn_offset} <= {cx} <= {width-zero_turn_offset}")
         print(f"Center point (Zero turn) : {cx}")
         self.i += 1
@@ -287,26 +282,30 @@ class CamMotorControl:
                 self.i += 1
                 '''
                 Additional func
-                - just_zero_turn_mode -> After charging zero turn mode(-500)
                 - Go back zero turn movement -> driving mode(-200), Stop at the starting point(all stop)
                 '''
                 if self.after_charging_zero_turn_cam_mode:
-                    self.pub_motor.publish(-500)
+                    self.pub_motor.publish(-200) # Zero turn stop
                     self.switching_modes(1) # driving mode
                     print(f"\tAfter charging zero turn cam mode -> driving mode {self.i}")
                     self.i += 1
-                    time.sleep(2)
+                    time.sleep(1)
                 elif (self.T_course_count == self.T_course_stop_threshold_departure): # time to TOF
                     print(f"\tIn front of the EV. Now TOF part. {self.i}")
                     self.i += 1
                     self.switching_modes(4) # TOF mode
-                    self.pub_motor.publish(-300)
-                    time.sleep(2)
+                    self.pub_motor.publish(-300) # TOF mode
+                    time.sleep(1)
+                elif self.T_course_count == self.T_course_stop_threshold_goback: # Stop at start point
+                    print(f"\tI'm in the start point. Finished whole charging scenario.")
+                    self.i += 1
+                    self.switching_modes(0) # All false
+                    self.pub_motor.publish(3000) # All stop motor
                 else:
-                    self.pub_motor.publish(-200)
+                    self.pub_motor.publish(-200) # driving mode
                     self.switching_modes(1) # driving mode
                     print(f"\tReturn to normal driving mode")
-                    time.sleep(2)
+                    time.sleep(1)
             else:
                 print(f"Cam Pub node : Do Zero turn until stop signal {self.i}")
                 self.i += 1

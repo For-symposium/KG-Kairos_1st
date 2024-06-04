@@ -724,6 +724,13 @@
 			"path" : "/opt/ros/noetic/share/catkin/cmake/templates/script.py.in"
 		},
 		{
+			"path" : "src/add_manual_mode.py"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/opt/ros/noetic/share/catkin/cmake/templates/script.py.in"
+		},
+		{
 			"isExternal" : true,
 			"path" : "/usr/src/googletest/CMakeLists.txt"
 		},

@@ -24,13 +24,14 @@
 - -100 : Cam mode ON
 - -109 : IR mode ON -> Zero-turn Left signal
 - -111 : IR mode ON -> Zero-turn Right signal
-- -120 : Start Zero turn mode ON using signal
-- -200 : Start Zero turn STOP
+- -120 : Zero turn mode ON using signal
+- -200 : Zero turn STOP
 - -300 : TOF mode ON
 - 400 : Robotarm ON
 - -400 : Robotarm OFF -> Zero-turn on
 
 - 2000 : Zero turn Cam mode ON
+- 3000 : All stop
 '''
 '''
 Normally
@@ -120,6 +121,15 @@ class MainControlMotor:
             self.robotarm_mode = False
             self.manual_mode = False
             self.after_charging_zero_turn_mode = True
+        elif select_mode == 0:
+            print("\tSet_modes : At the start point. Stop control.")
+            self.cam_mode = False
+            self.ir_mode = False
+            self.zero_turn_mode = False
+            self.tof_mode = False
+            self.robotarm_mode = False
+            self.manual_mode = False
+            self.after_charging_zero_turn_mode = False
         else:
             print("\tSet_modes : Manual mode")
             self.cam_mode = False
@@ -128,6 +138,7 @@ class MainControlMotor:
             self.tof_mode = False
             self.robotarm_mode = False
             self.manual_mode = True
+            self.after_charging_zero_turn_mode = False
 
     def cam_mode_control(self, cam_data):
         if cam_data == 10:
@@ -161,6 +172,8 @@ class MainControlMotor:
         elif data.data == -300:  # go to TOF mode
             self.zero_turn_stop = True
             self.set_modes(4)  # tof_mode
+        elif data.data == 0: # All stop
+            self.set_modes(3000) # All mode false
 
     def IR_motor_control_callback(self, data):
         if self.ir_mode:
