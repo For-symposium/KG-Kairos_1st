@@ -24,8 +24,8 @@
 - -100 : Cam mode ON
 - -109 : IR mode ON -> Zero-turn Left signal
 - -111 : IR mode ON -> Zero-turn Right signal
-- -120 : Zero turn mode ON using signal
-- -200 : Zero turn STOP
+- -120 : Start Zero turn mode ON using signal
+- -200 : Start Zero turn STOP
 - -300 : TOF mode ON
 - 400 : Robotarm ON
 - -400 : Robotarm OFF -> Zero-turn on
@@ -67,7 +67,7 @@ class MainControlMotor:
 
     def set_modes(self, select_mode):
         if select_mode == 1:
-            print("\tCam_mode ON")
+            print("\tSet_modes : Cam_mode ON")
             self.cam_mode = True
             self.ir_mode = False
             self.zero_turn_mode = False
@@ -76,7 +76,7 @@ class MainControlMotor:
             self.manual_mode = False
             self.after_charging_zero_turn_mode = False
         elif select_mode == 2:
-            print("\tIR_mode ON")
+            print("\tSet_modes : IR_mode ON")
             self.cam_mode = False
             self.ir_mode = True
             self.zero_turn_mode = False
@@ -85,7 +85,7 @@ class MainControlMotor:
             self.manual_mode = False
             self.after_charging_zero_turn_mode = False
         elif select_mode == 3:
-            print("\tZero_turn_mode ON")
+            print("\tSet_modes : Zero_turn_mode ON")
             self.cam_mode = False
             self.ir_mode = False
             self.zero_turn_mode = True
@@ -94,7 +94,7 @@ class MainControlMotor:
             self.manual_mode = False
             self.after_charging_zero_turn_mode = False
         elif select_mode == 4:
-            print("\tTOF_mode ON")
+            print("\tSet_modes : TOF_mode ON")
             self.cam_mode = False
             self.ir_mode = False
             self.zero_turn_mode = False
@@ -103,7 +103,7 @@ class MainControlMotor:
             self.manual_mode = False
             self.after_charging_zero_turn_mode = False
         elif select_mode == 5:
-            print("\tRobotarm_mode ON")
+            print("\tSet_modes : Robotarm_mode ON")
             self.cam_mode = False
             self.ir_mode = False
             self.zero_turn_mode = False
@@ -112,7 +112,7 @@ class MainControlMotor:
             self.manual_mode = False
             self.after_charging_zero_turn_mode = False
         elif select_mode == "after_charging_zero_turn_mode":
-            print("\tAfter Charging zero turn ON")
+            print("\tSet_modes : After Charging zero turn ON")
             self.cam_mode = False
             self.ir_mode = False
             self.zero_turn_mode = False
@@ -121,7 +121,7 @@ class MainControlMotor:
             self.manual_mode = False
             self.after_charging_zero_turn_mode = True
         else:
-            print("\tManual mode")
+            print("\tSet_modes : Manual mode")
             self.cam_mode = False
             self.ir_mode = False
             self.zero_turn_mode = False
@@ -170,29 +170,29 @@ class MainControlMotor:
             elif data.data == -120:
                 self.log("IR Sub : Do Zero turn")
                 self.pub_control_cam.publish(2000)  # Zero turn cam mode ON
-                self.set_modes(3)  # zero_turn_mode
+                self.set_modes(3)  # Zero_turn_mode
         elif self.zero_turn_mode:
             self.Zero_turn_control(self.zero_turn_dir)
 
     def Zero_turn_control(self, dir):
         if dir == -1:
-            self.log("Zero turn Sub : Turn Left")
+            self.log("Zero_turn_control : Zero turn Sub : Turn Left")
             # STM32 motor control
         elif dir == 1:
-            self.log("Zero turn Sub : Turn Right")
+            self.log("Zero_turn_control : Zero turn Sub : Turn Right")
             # STM32 motor control
-        elif dir == 0:
-            self.log("After charge Zero turn : Turn")
+        elif dir == 0: # after charging
+            self.log("Zero_turn_control : After charge Zero turn")
             # STM32 motor control
         if self.zero_turn_stop: # if come to center
             if self.tof_mode:
                 self.zero_turn_mode = False
                 self.zero_turn_stop = False # Initialize zero_turn_stop
-                self.log("Zero turn Sub : TOF mode ON")
+                self.log("Zero_turn_control : TOF mode ON")
             elif self.cam_mode: # Again to Normal mode
                 self.zero_turn_mode = False
                 self.zero_turn_stop = False # Initialize zero_turn_stop
-                self.log("Zero turn Sub : Zero turn STOP // Normal Cam Mode ON")
+                self.log("Zero_turn_control : Zero turn STOP // Normal Cam Mode ON")
 
     def TOF_control_callback(self, data):
         if self.tof_mode:
@@ -219,15 +219,16 @@ class MainControlMotor:
             if data.data == -400:  # Done Charging from robotarm 
                 self.log("Robotarm mode OFF")
                 time.sleep(2)
-                self.pub_control_cam.publish(2000)  # Zero turn cam mode ON
+                self.pub_control_cam.publish(2100)  # Just Zero turn cam mode ON
                 self.set_modes("after_charging_zero_turn_mode")
-                after_charge()
+                self.after_charging()
 
-    def after_charge(self):
+    def after_charging(self): # for only one zero turn after charging
         while self.after_charging_zero_turn_mode:
-            Zero_turn_control(0)
-            if self.zero_turn_stop:
-                self.log("Complete after charging zero turn")
+            self.Zero_turn_control(0)
+            self.log("After charge zero turn while find line")
+            if self.zero_turn_stop: # Q. Can it receive the subscriber when in while sentence?
+                self.log("\tComplete after charging zero turn")
                 self.set_modes(1) # Go to normal mode
                 break
     
@@ -236,7 +237,7 @@ class MainControlMotor:
         if manual_control_mode == 1:
             control_code = int(data.data[1:])
             self.log("Manual mode")
-            self.set_modes(6)
+            self.set_modes("Manual")
             self.send_data(control_code)
         else:
             self.log("Quit manual mode")
