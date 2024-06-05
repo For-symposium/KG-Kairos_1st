@@ -1,4 +1,8 @@
 <launch>
     <node pkg="elec_charge" type="functionalize_cam_pub.py" name="func_cam" output="screen" launch-prefix="gnome-terminal -- " />
     <node pkg="elec_charge" type="proj_control_motor.py" name="control_motor" output="screen" launch-prefix="gnome-terminal -- " />
+    <node pkg="elec_charge" type="IR_mode_pub.py" name="IR_mode" output="screen" launch-prefix="gnome-terminal -- " />
+    <node pkg="elec_charge" type="temp_TOF_pub.py" name="temp_TOF_pub" output="screen" launch-prefix="gnome-terminal -- " />
+    <node pkg="elec_charge" type="temp_robotarm.py" name="temp_robotarm" output="screen" launch-prefix="gnome-terminal -- " />
+    <node pkg="elec_charge" type="charging_state.py" name="charging_state" />
 </launch>

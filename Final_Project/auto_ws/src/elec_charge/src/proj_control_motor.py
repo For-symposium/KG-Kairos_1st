@@ -48,6 +48,7 @@ Enable T-course to Zero-turn
 import rospy
 import time
 from std_msgs.msg import Int32, String
+import serial
 
 class MainControlMotor:
     def __init__(self):
@@ -121,16 +122,7 @@ class MainControlMotor:
             self.robotarm_mode = False
             self.manual_mode = False
             self.after_charging_zero_turn_mode = True
-        elif select_mode == 0:
-            print("\tSet_modes : At the start point. Stop control.")
-            self.cam_mode = False
-            self.ir_mode = False
-            self.zero_turn_mode = False
-            self.tof_mode = False
-            self.robotarm_mode = False
-            self.manual_mode = False
-            self.after_charging_zero_turn_mode = False
-        else:
+        elif select_mode == "manual_mode":
             print("\tSet_modes : Manual mode")
             self.cam_mode = False
             self.ir_mode = False
@@ -139,20 +131,33 @@ class MainControlMotor:
             self.robotarm_mode = False
             self.manual_mode = True
             self.after_charging_zero_turn_mode = False
+        elif select_mode == 3000:
+            print("\tSet_modes : Arrive at the starting point!")
+            self.cam_mode = True
+            self.ir_mode = False
+            self.zero_turn_mode = False
+            self.tof_mode = False
+            self.robotarm_mode = False
+            self.manual_mode = False
+            self.after_charging_zero_turn_mode = False
 
     def cam_mode_control(self, cam_data):
         if cam_data == 10:
             self.log("Cam Sub : GO")
             # STM32 motor control
+            self.send_data(11)
         elif cam_data == 1:
             self.log("Cam Sub : Right")
             # STM32 motor control
+            self.send_data(14)
         elif cam_data == -1:
             self.log("Cam Sub : Left")
             # STM32 motor control
+            self.send_data(13)
         elif cam_data == 0:
             self.log("Cam Sub : STOP")
             # STM32 motor control
+            self.send_data(2)
 
         if cam_data == -109:
             self.zero_turn_dir = -1  # Zero turn Left
@@ -172,14 +177,16 @@ class MainControlMotor:
         elif data.data == -300:  # go to TOF mode
             self.zero_turn_stop = True
             self.set_modes(4)  # tof_mode
-        elif data.data == 0: # All stop
-            self.set_modes(3000) # All mode false
+        elif data.data == 3000: # All stop
+            self.set_modes(3000)
+            self.send_data(1) # All motor initialize
 
     def IR_motor_control_callback(self, data):
         if self.ir_mode:
             if data.data == 10:
                 self.log("IR Sub : GO")
                 # STM32 motor control
+                self.send_data(11)
             elif data.data == -120:
                 self.log("IR Sub : Do Zero turn")
                 self.pub_control_cam.publish(2000)  # Zero turn cam mode ON
@@ -191,12 +198,15 @@ class MainControlMotor:
         if dir == -1:
             self.log("Zero_turn_control : Zero turn Sub : Turn Left")
             # STM32 motor control
+            self.send_data(9)
         elif dir == 1:
             self.log("Zero_turn_control : Zero turn Sub : Turn Right")
             # STM32 motor control
+            self.send_data(10)
         elif dir == 0: # after charging
             self.log("Zero_turn_control : After charge Zero turn")
             # STM32 motor control
+            self.send_data(9)
         if self.zero_turn_stop: # if come to center
             if self.tof_mode:
                 self.zero_turn_mode = False
@@ -211,18 +221,23 @@ class MainControlMotor:
         if self.tof_mode:
             if data.data == 10:
                 # STM32 motor control
+                self.send_data(11)
                 self.log("TOF Sub : GO")
-            # elif data.data == -1:
-            #     # STM32 motor control
-            #     self.log("TOF Sub : Left")
-            # elif data.data == 1:
-            #     # STM32 motor control
-            #     self.log("TOF Sub : Right")
-            # elif data.data == 0:
-            #     # STM32 motor control
-            #     self.log("TOF Sub : STOP")
+            elif data.data == -1:
+                # STM32 motor control
+                self.send_data(13)
+                self.log("TOF Sub : Left")
+            elif data.data == 1:
+                # STM32 motor control
+                self.send_data(14)
+                self.log("TOF Sub : Right")
+            elif data.data == 0:
+                # STM32 motor control
+                self.send_data(2)
+                self.log("TOF Sub : STOP")
                 self.tof_cnt += 1
             if self.tof_cnt == 5:
+                self.send_data(1)  # Align motors before changing mode
                 self.pub_robotarm.publish(400)
                 self.set_modes(5)  # robotarm_mode
                 self.log("Robotarm mode ON")
@@ -234,6 +249,7 @@ class MainControlMotor:
                 time.sleep(2)
                 self.pub_control_cam.publish(2100)  # Just Zero turn cam mode ON
                 self.set_modes("after_charging_zero_turn_mode")
+                self.send_data(1) # Align motors before changing mode
                 self.after_charging()
 
     def after_charging(self): # for only one zero turn after charging
@@ -258,7 +274,7 @@ class MainControlMotor:
     
     def send_data(self, data):
         byte_code = data.to_bytes(1, byteorder='big')
-        # ser.write(byte_code)
+        ser.write(byte_code)
         self.log("Send data")
 
     def listener(self):
@@ -272,6 +288,7 @@ class MainControlMotor:
         rospy.spin()
 
     def clean_up(self):
+        self.send_data(1)
         rospy.loginfo("Sub node: Cleaning up...")
 
     def log(self, message):
@@ -281,6 +298,9 @@ class MainControlMotor:
 if __name__ == '__main__':
     try:
         rospy.init_node('motor_control_sub_node', anonymous=True)
+        port = "/dev/ttyUSB0"
+        baudrate = 9600
+        ser = serial.Serial(port, baudrate, timeout=1)
         main_control_motor = MainControlMotor()
         main_control_motor.listener()
     except rospy.ROSInterruptException:
