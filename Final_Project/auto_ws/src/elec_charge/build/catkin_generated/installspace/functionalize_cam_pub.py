@@ -68,8 +68,8 @@ class CamMotorControl:
             self.TOF_mode = False
             self.after_charging_zero_turn_cam_mode = True
         elif target_mode == 0:
-            print("\ttarget_mode == ALL FALSE")
-            self.driving_cam_mode = False
+            print("\ttarget_mode == Waiting for another signal")
+            self.driving_cam_mode = True
             self.ir_mode = False
             self.zero_turn_cam_mode = False
             self.TOF_mode = False
@@ -101,7 +101,9 @@ class CamMotorControl:
                 self.T_course_stop_threshold_goback = len(self.zero_turn_arr)
             elif data.data == 22:
                 self.pub_client.publish(2)
-                self.zero_turn_arr = [1, 0, 1, -1, 0, -1, -1]
+                # self.zero_turn_arr = [1, 0, 1, -1, 0, -1, -1]
+                # self.T_course_stop_threshold_departure = 3
+                self.zero_turn_arr = [0, -1]
                 self.T_course_stop_threshold_departure = 3
                 self.T_course_stop_threshold_goback = len(self.zero_turn_arr)
             else:
@@ -136,7 +138,7 @@ class CamMotorControl:
             print(f"IR_mode {self.i}")
             self.i += 1
         else:
-            self.pub_motor.publish(0)
+            self.pub_motor.publish(3000)
             print(f"Nothing mode {self.i}")
             self.i += 1
 
@@ -299,7 +301,9 @@ class CamMotorControl:
                 elif self.T_course_count == self.T_course_stop_threshold_goback: # Stop at start point
                     print(f"\tI'm in the start point. Finished whole charging scenario.")
                     self.i += 1
-                    self.switching_modes(0) # All false
+                    self.Done_subscribed = False
+                    self.T_course_count = 0
+                    self.switching_modes(0) # Waiting for website signal
                     self.pub_motor.publish(3000) # All stop motor
                 else:
                     self.pub_motor.publish(-200) # driving mode
@@ -347,17 +351,17 @@ class CamMotorControl:
                 elif cont_list:
                     self.process_contours_0(cont_list, img, width, roi)
                 else:
-                    self.pub_motor.publish(0)
+                    self.pub_motor.publish(1)
                     print(f"No contours detected: {self.i}")
                     self.i += 1
 
             except Exception as e:
                 print(f"Exception STOP: {e} {self.i}")
-                self.pub_motor.publish(0)
+                self.pub_motor.publish(1)
                 
             finally:
                 key = cv2.waitKey(5)
-                cv2.imshow('mask', img)
+                # cv2.imshow('mask', img)
                 if key & 0xff == ord('q'):
                     rospy.loginfo("Cam pub node : Finish subscribing")
                     break

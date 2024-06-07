@@ -220,27 +220,25 @@ class MainControlMotor:
     def TOF_control_callback(self, data):
         if self.tof_mode:
             if data.data == 10:
-                # STM32 motor control
                 self.send_data(11)
                 self.log("TOF Sub : GO")
             elif data.data == -1:
-                # STM32 motor control
                 self.send_data(13)
                 self.log("TOF Sub : Left")
             elif data.data == 1:
-                # STM32 motor control
                 self.send_data(14)
                 self.log("TOF Sub : Right")
             elif data.data == 0:
-                # STM32 motor control
-                self.send_data(2)
-                self.log("TOF Sub : STOP")
-                self.tof_cnt += 1
-            if self.tof_cnt == 5:
-                self.send_data(1)  # Align motors before changing mode
-                self.pub_robotarm.publish(400)
+                self.send_data(1)
                 self.set_modes(5)  # robotarm_mode
-                self.log("Robotarm mode ON")
+                self.log("TOF Sub : STOP and Robotarm mode ON")
+                self.pub_robotarm.publish(400) # send robotarm to Run
+                # self.tof_cnt += 1
+            # if self.tof_cnt == 5:
+            #     self.send_data(1)  # Align motors before changing mode
+            #     self.pub_robotarm.publish(400)
+            #     self.set_modes(5)  # robotarm_mode
+            #     self.log("Robotarm mode ON")
 
     def robotarm_callback(self, data):
         if self.robotarm_mode:
@@ -266,7 +264,7 @@ class MainControlMotor:
         if manual_control_mode == 1:
             control_code = int(data.data[1:])
             self.log("Manual mode")
-            self.set_modes("Manual")
+            self.set_modes("manual_mode")
             self.send_data(control_code)
         else:
             self.log("Quit manual mode")

@@ -1,29 +1,23 @@
-#!/usr/bin/env python
-
+import smbus
+import time
 import rospy
 from std_msgs.msg import Int32
-import smbus2
-import time
 
-# I2C bus and address setting
 I2C_BUS = 1
-SLAVE_ADDRESS = 0x04
+ARDUINO_ADDRESS = 0x08
 
 def read_i2c_data():
+    bus = smbus.SMBus(I2C_BUS)
     try:
-        bus = smbus2.SMBus(I2C_BUS)
-        data = bus.read_i2c_block_data(SLAVE_ADDRESS, 0, 4)
-        # change data as byte
-        value = int.from_bytes(data, byteorder='little', signed=True)
-        return value
-    except Exception as e:
-        rospy.logerr("Failed to read from I2C device: %s", e)
+        data = bus.read_byte(ARDUINO_ADDRESS)
+        return data
+    except IOError:
         return None
 
 def i2c_listener():
     rospy.init_node('i2c_listener', anonymous=True)
     pub = rospy.Publisher('ToF_Topic', Int32, queue_size=10)
-    rate = rospy.Rate(10) # 10Hz
+    rate = rospy.Rate(10)  # 10Hz
 
     while not rospy.is_shutdown():
         tof_state = read_i2c_data()
