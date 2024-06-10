@@ -233,12 +233,12 @@ class MainControlMotor:
                 self.set_modes(5)  # robotarm_mode
                 self.log("TOF Sub : STOP and Robotarm mode ON")
                 self.pub_robotarm.publish(400) # send robotarm to Run
-                # self.tof_cnt += 1
-            # if self.tof_cnt == 5:
-            #     self.send_data(1)  # Align motors before changing mode
-            #     self.pub_robotarm.publish(400)
-            #     self.set_modes(5)  # robotarm_mode
-            #     self.log("Robotarm mode ON")
+                self.tof_cnt += 1
+            if self.tof_cnt == 20:
+                self.send_data(1)  # Align motors before changing mode
+                self.pub_robotarm.publish(400)
+                self.set_modes(5)  # robotarm_mode
+                self.log("Robotarm mode ON")
 
     def robotarm_callback(self, data):
         if self.robotarm_mode:
@@ -271,9 +271,10 @@ class MainControlMotor:
             self.set_modes(1)
     
     def send_data(self, data):
-        byte_code = data.to_bytes(1, byteorder='big')
-        ser.write(byte_code)
-        self.log("Send data")
+        # byte_code = data.to_bytes(1, byteorder='big')
+        # ser.write(byte_code)
+        # self.log(f"Send data")
+        pass
 
     def listener(self):
         rospy.loginfo("Sub node : Start Subscribing")
@@ -296,9 +297,9 @@ class MainControlMotor:
 if __name__ == '__main__':
     try:
         rospy.init_node('motor_control_sub_node', anonymous=True)
-        port = "/dev/ttyUSB0"
-        baudrate = 9600
-        ser = serial.Serial(port, baudrate, timeout=1)
+        # port = "/dev/ttyUSB0"
+        # baudrate = 9600
+        # ser = serial.Serial(port, baudrate, timeout=1)
         main_control_motor = MainControlMotor()
         main_control_motor.listener()
     except rospy.ROSInterruptException:

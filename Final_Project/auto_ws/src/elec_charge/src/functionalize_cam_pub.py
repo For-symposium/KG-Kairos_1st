@@ -339,7 +339,7 @@ class CamMotorControl:
             self.roi_height = round(height * 0.95)
             self.roi_width = 0
             # Change roi in order to apply the new position
-            roi = img[height*offset1:height*offset2, self.roi_width:(width - self.roi_width)]
+            roi = img[round(height*offset1):round(height*offset2), self.roi_width:(width - self.roi_width)]
             img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             # Yellow line
             img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
