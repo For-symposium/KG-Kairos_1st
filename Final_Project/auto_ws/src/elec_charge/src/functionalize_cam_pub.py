@@ -321,6 +321,8 @@ class CamMotorControl:
         
         self.cap.set(3, 640)
         self.cap.set(4, 480)
+        offset1 = 0.57
+        offset2 = 0.67
 
         while not rospy.is_shutdown():
             if not self.Done_subscribed:
@@ -336,7 +338,8 @@ class CamMotorControl:
             height, width, _ = img.shape
             self.roi_height = round(height * 0.95)
             self.roi_width = 0
-            roi = img[self.roi_height:, self.roi_width:(width - self.roi_width)]
+            # Change roi in order to apply the new position
+            roi = img[height*offset1:height*offset2, self.roi_width:(width - self.roi_width)]
             img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             # Yellow line
             img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
