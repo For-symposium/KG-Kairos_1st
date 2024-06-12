@@ -271,10 +271,9 @@ class MainControlMotor:
             self.set_modes(1)
     
     def send_data(self, data):
-        # byte_code = data.to_bytes(1, byteorder='big')
-        # ser.write(byte_code)
-        # self.log(f"Send data")
-        pass
+        byte_code = data.to_bytes(1, byteorder='big')
+        ser.write(byte_code)
+        # self.log(f"Send data {data}")
 
     def listener(self):
         rospy.loginfo("Sub node : Start Subscribing")
@@ -297,9 +296,9 @@ class MainControlMotor:
 if __name__ == '__main__':
     try:
         rospy.init_node('motor_control_sub_node', anonymous=True)
-        # port = "/dev/ttyUSB0"
-        # baudrate = 9600
-        # ser = serial.Serial(port, baudrate, timeout=1)
+        port = "/dev/ttyUSB0"
+        baudrate = 9600
+        ser = serial.Serial(port, baudrate, timeout=1)
         main_control_motor = MainControlMotor()
         main_control_motor.listener()
     except rospy.ROSInterruptException:

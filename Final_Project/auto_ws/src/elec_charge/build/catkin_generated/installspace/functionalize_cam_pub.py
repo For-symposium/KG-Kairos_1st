@@ -124,7 +124,7 @@ class CamMotorControl:
 
     def process_contours_0(self, cont_list, img, width, roi):
         # Control overall offset
-        offset = width // 4
+        offset = width // 2.5
         c = max(cont_list, key=cv2.contourArea)
         M = cv2.moments(c)
         cx = int(M['m10'] / M['m00'])
@@ -321,8 +321,8 @@ class CamMotorControl:
         
         self.cap.set(3, 640)
         self.cap.set(4, 480)
-        offset1 = 0.57
-        offset2 = 0.67
+        offset1 = 0.62
+        offset2 = 0.77
 
         while not rospy.is_shutdown():
             if not self.Done_subscribed:
@@ -342,9 +342,9 @@ class CamMotorControl:
             roi = img[round(height*offset1):round(height*offset2), self.roi_width:(width - self.roi_width)]
             img_cvt = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             # Yellow line
-            img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
+            # img_mask = cv2.inRange(img_cvt, np.array([22, 100, 100]), np.array([35, 255, 255]))
             # Black line
-            # img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 120, 50]))
+            img_mask = cv2.inRange(img_cvt, np.array([0, 0, 0]), np.array([200, 220, 80]))
             cont_list, _ = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             try:

@@ -3,6 +3,12 @@ Pin 8 (TX) -> Arduino Mega Pin 19 (RX1)
 Pin 10 (RX) -> Arduino Mega Pin 18 (TX1)
 GND -> GND (공통 그라운드 연결)
 '''
+'''
+If unable to use /dev/ttyTHS1
+sudo systemctl stop nvgetty
+sudo systemctl disable nvgetty
+sudo reboot
+'''
 import serial
 import time
 import rospy
@@ -41,9 +47,9 @@ if __name__=='__main__':
         rospy.init_node('TOF_pub_node', anonymous=True)
         pub_TOF = rospy.Publisher('control_TOF', Int32, queue_size=1)
         rate = rospy.Rate(10)
-        ser = serial.Serial(uart_port, baud_rate)
         uart_port = '/dev/ttyTHS1'
         baud_rate = 9600
+        ser = serial.Serial(uart_port, baud_rate)
         TOF_mode_pub()
     except rospy.ROSInterruptException:
         print("TOF_mode_pub : Finish Publishing")
