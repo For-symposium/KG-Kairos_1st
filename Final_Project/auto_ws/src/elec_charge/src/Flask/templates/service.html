@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.5/lib/eventemitter2.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+    // Get the value from Flask
+    var vehicle_position = {{ value }};
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+        //url : 'ws://192.168.0.10:9090'
+        url : 'ws://172.30.1.60:9090'
+    });
+
+    ros.on('connection', function() {
+        console.log('Connected to websocket server.');
+    });
+
+    ros.on('error', function(error) {
+        console.log('Error connecting to websocket server: ', error);
+    });
+
+    ros.on('close', function() {
+        console.log('Connection to websocket server closed.');
+    });
+
+    // Publishing a Topic
+    var call_charger = new ROSLIB.Topic({
+        ros: ros,
+        name: 'vehicle_position',
+        messageType: 'std_msgs/Int32'
+    });
+
+    function callCharger(vehicle_position) {
+        var intValue = parseInt(vehicle_position, 10);
+        var message = new ROSLIB.Message({
+            data: intValue
+        });
+
+        call_charger.publish(message);
+
+        var vehicle_position_dir;
+        var vehicle_position_num;
+
+        if (vehicle_position.toString()[0] == '1') {
+            vehicle_position_dir = "Right";
+            vehicle_position_num = vehicle_position.toString().substring(1);
+        } else {
+            vehicle_position_dir = "Left";
+            vehicle_position_num = vehicle_position.toString().substring(1);
+        }
+
+        console.log("Published: " + vehicle_position_dir + ' ' + vehicle_position_num);
+    }
+
+    // Attach event listener to the button
+    document.querySelector('.button').addEventListener('click', function() {
+        callCharger(vehicle_position);
+    });
+
+    // Subscribing to a Topic
+    var for_client = new ROSLIB.Topic({
+        ros: ros,
+        name: 'client_message',
+        messageType: 'std_msgs/Int32'
+    });
+
+    for_client.subscribe(function(message) {
+        var client_message;
+        switch (message.data) {
+            case 1:
+                client_message = '충전을 원하시면 버튼을 눌러주세요.';
+                break;
+            case 2:
+                client_message = '이동식 충전기가 차량으로 이동 중입니다.';
+                break;
+            case 3:
+                client_message = '충전 중입니다.';
+                break;
+            case 4:
+                client_message = '충전이 완료되었습니다.';
+                break;
+            default:
+                client_message = 'First Penguin';
+        }
+        console.log("Change message: " + client_message);
+        document.getElementById('client_message').textContent = client_message;
+    });
+});
+</script>
+<style type="text/css">
+  @import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro:600&display=swap");
+  
+  *,
+  *:before,
+  *:after {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #f8f8f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  h1 {
+    margin-bottom: 15px; /* 제목과 그리드 사이의 간격 설정 */
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 40px;
+    font-weight: 600;
+    color: #606060;
+  }
+
+  p {
+    margin-bottom: 30px; /* 제목과 그리드 사이의 간격 설정 */
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #606060;
+  }
+
+  .grid {
+    max-width: 400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    align-items: center;
+    justify-content: center;
+    grid-gap: 15px;
+  }
+  
+  button,
+  [role=button] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    cursor: pointer;
+    width: 100px;
+    height: 50px;
+    background-image: linear-gradient(to top, #D8D9DB 0%, #fff 80%, #FDFDFD 100%);
+    border-radius: 30px;
+    border: 1px solid #8F9092;
+    box-shadow: 0 4px 3px 1px #FCFCFC, 0 6px 8px #D6D7D9, 0 -4px 4px #CECFD1, 0 -6px 4px #FEFEFE, inset 0 0 3px 0 #CECFD1;
+    transition: all 0.2s ease;
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #606060;
+    text-shadow: 0 1px #fff;
+  }
+  
+  button > *,
+  [role=button] > * {
+    transition: transform 0.2s ease;
+  }
+  
+  button:hover:not([disabled]),
+  [role=button]:hover:not([disabled]) {
+    box-shadow: 0 4px 3px 1px #FCFCFC, 0 6px 8px #D6D7D9, 0 -4px 4px #CECFD1, 0 -6px 4px #FEFEFE, inset 0 0 3px 3px #CECFD1;
+  }
+
+  button:hover:not([disabled]) > *,
+  [role=button]:hover:not([disabled]) > * {
+    transform: scale(0.975);
+  }
+
+  button:active:not([disabled]),
+  [role=button]:active:not([disabled]) {
+    box-shadow: 0 4px 3px 1px #FCFCFC, 0 6px 8px #D6D7D9, 0 -4px 4px #CECFD1, 0 -6px 4px #FEFEFE, inset 0 0 5px 3px #999, inset 0 0 30px #aaa;
+  }
+
+  button:active:not([disabled]) > *,
+  [role=button]:active:not([disabled]) > * {
+    transform: scale(0.95);
+  }
+
+  button:disabled,
+  [role=button]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  button.icon,
+  [role=button].icon {
+    width: 50px;
+  }
+
+  button.icon svg,
+  [role=button].icon svg {
+    margin-top: 3px;
+    width: 30px;
+    height: 30px;
+  }
+
+  @media (min-width: 600px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    button,
+    [role=button] {
+      width: 150px;
+      height: 50px;
+      font-size: 20px;
+    }
+  }
+  </style>
+</head>
+
+<body>
+  <h1> Service Mode </h1>
+  <p id="client_message">충전을 원하시면 버튼을 눌러주세요.</p>
+  <div class="grid">
+    <div></div>
+    <div class="button" role="button"><span>충전기 호출</span></div>
+  </div>
+</body>
+</html>
